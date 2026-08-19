@@ -1,11 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ota_update/ota_update.dart';
 import '../models/models.dart';
 import '../providers/pos_provider.dart';
+import '../services/update_service.dart';
 import '../widgets/pin_pad_dialog.dart';
 
-class ShiftGateView extends StatelessWidget {
+class ShiftGateView extends StatefulWidget {
   const ShiftGateView({super.key});
+
+  @override
+  State<ShiftGateView> createState() => _ShiftGateViewState();
+}
+
+class _ShiftGateViewState extends State<ShiftGateView> {
+  AppUpdateInfo? _updateInfo;
+  bool _isDownloading = false;
+  int _downloadProgress = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUpdate();
+  }
+
+  Future<void> _checkUpdate() async {
+    try {
+      final info = await UpdateService.checkForUpdate();
+      if (mounted && info.hasUpdate) {
+        setState(() {
+          _updateInfo = info;
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _executeOtaDownload(String apkUrl) {
+    if (apkUrl.isEmpty) return;
+    setState(() {
+      _isDownloading = true;
+      _downloadProgress = 0;
+    });
+
+    try {
+      UpdateService.executeUpdate(apkUrl).listen(
+        (OtaEvent event) {
+          if (mounted) {
+            setState(() {
+              if (event.status == OtaStatus.DOWNLOADING) {
+                _downloadProgress = int.tryParse(event.value ?? '0') ?? _downloadProgress;
+              } else if (event.status == OtaStatus.INSTALLING) {
+                _isDownloading = false;
+              } else if (event.status == OtaStatus.ALREADY_RUNNING_ERROR ||
+                  event.status == OtaStatus.PERMISSION_NOT_GRANTED_ERROR ||
+                  event.status == OtaStatus.INTERNAL_ERROR ||
+                  event.status == OtaStatus.DOWNLOAD_ERROR) {
+                _isDownloading = false;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('የማዘመን ስህተት: ${event.status}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            });
+          }
+        },
+        onError: (e) {
+          if (mounted) {
+            setState(() {
+              _isDownloading = false;
+            });
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +98,83 @@ class ShiftGateView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Optional Auto-Update Available Banner
+                  if (_updateInfo != null && _updateInfo!.hasUpdate) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.green.shade300, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(color: Colors.green.shade100, shape: BoxShape.circle),
+                                child: const Icon(Icons.system_update, color: Colors.green, size: 20),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'አዲስ ማሻሻያ ተገኝቷል (v${_updateInfo!.latestVersion})',
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.green.shade900),
+                                    ),
+                                    Text(
+                                      _updateInfo!.releaseNotes,
+                                      style: TextStyle(fontSize: 11, color: Colors.green.shade800),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (_isDownloading) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('በማውረድ ላይ...', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green)),
+                                Text('$_downloadProgress%', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.green)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            LinearProgressIndicator(
+                              value: _downloadProgress / 100.0,
+                              backgroundColor: Colors.green.shade100,
+                              valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                              minHeight: 6,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ] else
+                            SizedBox(
+                              width: double.infinity,
+                              height: 40,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _executeOtaDownload(_updateInfo!.apkUrl),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF047857),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                icon: const Icon(Icons.download, size: 16, color: Colors.white),
+                                label: const Text('አሁን በ 1-Tap አዘምን (Update)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white)),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+
                   // Logo & Brand
                   Container(
                     width: 72,
@@ -193,7 +346,7 @@ class ShiftGateView extends StatelessWidget {
                           const Text('ሲስተም ዝግጁ ነው • ሎካል & ደመና', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
                         ],
                       ),
-                      const Text('ማራኪ POS v2.6.0', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                      const Text('ማራኪ POS v2.6.2', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
