@@ -312,10 +312,13 @@ class DataService {
   /// Automatically syncs catalog from cloud without any APK reinstalls
   Future<bool> syncCatalogFromCloud() async {
     try {
+      final cacheBuster = DateTime.now().millisecondsSinceEpoch;
       final response = await http
-          .get(Uri.parse(
-              'https://raw.githubusercontent.com/Samiassaye-21/Budget-system/main/public/catalog.json'))
-          .timeout(const Duration(seconds: 5));
+          .get(
+            Uri.parse('https://raw.githubusercontent.com/Samiassaye-21/Budget-system/main/public/catalog.json?t=$cacheBuster'),
+            headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'},
+          )
+          .timeout(const Duration(seconds: 6));
       if (response.statusCode == 200) {
         final List<dynamic> list = json.decode(utf8.decode(response.bodyBytes));
         final fetched = list.map((item) => Product.fromMap(item as Map<String, dynamic>)).toList();
