@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/models.dart';
 
 final List<Product> initialProducts = [
@@ -304,7 +306,28 @@ class DataService {
   int _lastLeftoverCups = 120;
 
   Future<void> init() async {
-    // Pure Dart in-memory initialization
+    await syncCatalogFromCloud();
+  }
+
+  /// Automatically syncs catalog from cloud without any APK reinstalls
+  Future<bool> syncCatalogFromCloud() async {
+    try {
+      final response = await http
+          .get(Uri.parse(
+              'https://raw.githubusercontent.com/Samiassaye-21/Budget-system/main/public/catalog.json'))
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final List<dynamic> list = json.decode(utf8.decode(response.bodyBytes));
+        final fetched = list.map((item) => Product.fromMap(item as Map<String, dynamic>)).toList();
+        if (fetched.isNotEmpty) {
+          _products = fetched;
+          return true;
+        }
+      }
+    } catch (_) {
+      // Retain offline cache safely if offline
+    }
+    return false;
   }
 
   int getLastLeftoverCups() {

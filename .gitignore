@@ -16,4 +16,4 @@ node_modules
 build/
 **/build/
 .dart_tool/
-**/.dart_tool/
+**/.dart_tool/*.apk

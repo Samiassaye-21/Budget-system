@@ -72,12 +72,22 @@ class POSProvider extends ChangeNotifier {
   }
 
   Future<void> _init() async {
-    await _dataService.init();
     _products = _dataService.getProducts();
     _debts = _dataService.getCustomerDebts();
     _orders = _dataService.getOrders();
     _kitchenTickets = _dataService.getKitchenTickets();
     notifyListeners();
+
+    // Silently auto-sync newest catalog from cloud on startup
+    await refreshCatalog();
+  }
+
+  Future<void> refreshCatalog() async {
+    final updated = await _dataService.syncCatalogFromCloud();
+    if (updated) {
+      _products = _dataService.getProducts();
+      notifyListeners();
+    }
   }
 
   void addKitchenTicket(KitchenTicket ticket) {
