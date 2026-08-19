@@ -1,7 +1,7 @@
 {
   "version": "2.6.0",
   "buildNumber": 3,
-  "apkUrl": "http://10.210.28.95:8080/maraki_pos_arm64.apk",
+  "apkUrl": "https://github.com/Samiassaye-21/Budget-system/releases/download/v2.6.0/maraki_pos_arm64.apk",
   "releaseNotes": "• አዲሱ 16 የተሟሉ የምግብ ዝርዝሮች እና ትክክለኛ ዋጋዎች ተካተዋል\n• የካታሎግ እና የፍለጋ ማሻሻያ\n• የተሻሻለ የሽያጭ እና የክፍያ ሂደት",
   "forceUpdate": false,
   "updatedAt": "2026-08-19T06:45:00Z"
