@@ -6,9 +6,8 @@ plugins {
 
 android {
     namespace = "com.marakipos.maraki_pos_mobile"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     buildToolsVersion = "36.0.0"
-    // ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

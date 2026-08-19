@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:install_plugin/install_plugin.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -147,13 +147,17 @@ class UpdateService {
         return false;
       }
 
-      // 5. Trigger Native Installer via FileProvider
-      final installResult = await InstallPlugin.installApk(
+      // 5. Trigger Native Installer via OpenFilex (Android v2 embedding FileProvider)
+      final result = await OpenFilex.open(
         apkFile.path,
-        appId: androidAppId,
+        type: 'application/vnd.android.package-archive',
       );
 
-      debugPrint('InstallPlugin result: $installResult');
+      debugPrint('OpenFilex result: ${result.type} - ${result.message}');
+      if (result.type != ResultType.done) {
+        onError('መጫኛውን መክፈት አልተቻለም: ${result.message}\nእባክዎ "Install unknown apps" ፍቃድ መብራቱን ያረጋግጡ።');
+        return false;
+      }
       return true;
     } catch (e) {
       debugPrint('downloadAndInstallApk Error: $e');
