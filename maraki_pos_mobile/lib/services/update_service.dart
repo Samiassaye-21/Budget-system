@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:ota_update/ota_update.dart';
+import 'package:install_plugin/install_plugin.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AppUpdateInfo {
   final bool hasUpdate;
@@ -24,11 +28,13 @@ class AppUpdateInfo {
 class UpdateService {
   static const String currentAppVersion = '2.6.2';
   static const int currentBuildNumber = 5;
+  static const String androidAppId = 'com.marakipos.maraki_pos_mobile';
 
-  // Default endpoint for remote updates. Can be configured to Supabase / GitHub Releases / Custom API
+  // Remote Manifest Endpoint
   static const String defaultUpdateManifestUrl =
       'https://raw.githubusercontent.com/Samiassaye-21/Budget-system/main/app_version.json';
 
+  /// Check remote version with cache buster
   static Future<AppUpdateInfo> checkForUpdate({String? customUrl}) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final manifestUrl = customUrl ?? '$defaultUpdateManifestUrl?t=$timestamp';
@@ -65,7 +71,6 @@ class UpdateService {
       debugPrint('Update check error: $e');
     }
 
-    // Default if network is offline or no newer version
     return AppUpdateInfo(
       hasUpdate: false,
       currentVersion: currentAppVersion,
@@ -73,6 +78,88 @@ class UpdateService {
       releaseNotes: 'ሲስተምዎ በቅርቡ የተሻሻለው አዲስ ስሪት ላይ ነው (Up to date)',
       apkUrl: '',
     );
+  }
+
+  /// Check & Request Install Unknown Apps permission
+  static Future<bool> ensureInstallPermission() async {
+    if (kIsWeb || !Platform.isAndroid) return true;
+
+    final status = await Permission.requestInstallPackages.status;
+    if (status.isGranted) return true;
+
+    final result = await Permission.requestInstallPackages.request();
+    return result.isGranted;
+  }
+
+  /// Download APK to external storage and trigger native installer
+  static Future<bool> downloadAndInstallApk(
+    String apkUrl, {
+    required void Function(int progress) onProgress,
+    required void Function(String error) onError,
+  }) async {
+    try {
+      // 1. Verify Permission BEFORE download
+      final hasPerm = await ensureInstallPermission();
+      if (!hasPerm) {
+        onError('እባክዎ በስልክዎ Settings ውስጥ "Install Unknown Apps" ፍቃድ ይስጡ።');
+        return false;
+      }
+
+      // 2. Resolve External Files Directory (Accessible by FileProvider)
+      final Directory? externalDir = await getExternalStorageDirectory();
+      final Directory targetDir = externalDir ?? await getTemporaryDirectory();
+      final File apkFile = File('${targetDir.path}/maraki_pos_update.apk');
+
+      if (await apkFile.exists()) {
+        await apkFile.delete();
+      }
+
+      // 3. Download APK with Stream progress
+      final client = http.Client();
+      final request = http.Request('GET', Uri.parse(apkUrl));
+      final response = await client.send(request);
+
+      if (response.statusCode != 200) {
+        onError('ፋይሉን ማውረድ አልተቻለም (HTTP ${response.statusCode})');
+        return false;
+      }
+
+      final totalBytes = response.contentLength ?? 0;
+      int receivedBytes = 0;
+      final sink = apkFile.openWrite();
+
+      await response.stream.listen((chunk) {
+        sink.add(chunk);
+        receivedBytes += chunk.length;
+        if (totalBytes > 0) {
+          final progress = ((receivedBytes / totalBytes) * 100).toInt();
+          onProgress(progress.clamp(0, 100));
+        }
+      }).asFuture();
+
+      await sink.flush();
+      await sink.close();
+      client.close();
+
+      // 4. Verify file exists and is not empty
+      if (!await apkFile.exists() || await apkFile.length() <= 0) {
+        onError('የወረደው የ APK ፋይል ባዶ ነው ወይም አልተገኘም።');
+        return false;
+      }
+
+      // 5. Trigger Native Installer via FileProvider
+      final installResult = await InstallPlugin.installApk(
+        apkFile.path,
+        appId: androidAppId,
+      );
+
+      debugPrint('InstallPlugin result: $installResult');
+      return true;
+    } catch (e) {
+      debugPrint('downloadAndInstallApk Error: $e');
+      onError('የማዘመን ስህተት: $e\nእባክዎ "Install unknown apps" ፍቃድ መብራቱን ያረጋግጡ።');
+      return false;
+    }
   }
 
   static bool _isVersionGreater(String remote, String current) {
@@ -86,19 +173,6 @@ class UpdateService {
       return rParts.length > cParts.length;
     } catch (_) {
       return false;
-    }
-  }
-
-  /// Downloads the APK and prompts native Android installer with 1 tap
-  static Stream<OtaEvent> executeUpdate(String apkUrl) {
-    try {
-      return OtaUpdate().execute(
-        apkUrl,
-        destinationFilename: 'maraki_pos_update.apk',
-      );
-    } catch (e) {
-      debugPrint('OTA execute error: $e');
-      rethrow;
     }
   }
 }

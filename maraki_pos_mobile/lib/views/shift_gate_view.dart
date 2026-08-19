@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:ota_update/ota_update.dart';
 import '../models/models.dart';
 import '../providers/pos_provider.dart';
 import '../services/update_service.dart';
@@ -35,51 +34,48 @@ class _ShiftGateViewState extends State<ShiftGateView> {
     } catch (_) {}
   }
 
-  void _executeOtaDownload(String apkUrl) {
+  Future<void> _executeOtaDownload(String apkUrl) async {
     if (apkUrl.isEmpty) return;
     setState(() {
       _isDownloading = true;
       _downloadProgress = 0;
     });
 
-    try {
-      UpdateService.executeUpdate(apkUrl).listen(
-        (OtaEvent event) {
-          if (mounted) {
-            setState(() {
-              if (event.status == OtaStatus.DOWNLOADING) {
-                _downloadProgress = int.tryParse(event.value ?? '0') ?? _downloadProgress;
-              } else if (event.status == OtaStatus.INSTALLING) {
-                _isDownloading = false;
-              } else if (event.status == OtaStatus.ALREADY_RUNNING_ERROR ||
-                  event.status == OtaStatus.PERMISSION_NOT_GRANTED_ERROR ||
-                  event.status == OtaStatus.INTERNAL_ERROR ||
-                  event.status == OtaStatus.DOWNLOAD_ERROR) {
-                _isDownloading = false;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('የማዘመን ስህተት: ${event.status}'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            });
-          }
-        },
-        onError: (e) {
-          if (mounted) {
-            setState(() {
-              _isDownloading = false;
-            });
-          }
-        },
-      );
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isDownloading = false;
-        });
-      }
+    await UpdateService.downloadAndInstallApk(
+      apkUrl,
+      onProgress: (progress) {
+        if (mounted) {
+          setState(() {
+            _downloadProgress = progress;
+          });
+        }
+      },
+      onError: (err) {
+        if (mounted) {
+          setState(() {
+            _isDownloading = false;
+          });
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('የማዘመን ስህተት (Update Error)'),
+              content: Text(err),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('እሺ (OK)'),
+                ),
+              ],
+            ),
+          );
+        }
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _isDownloading = false;
+      });
     }
   }
 

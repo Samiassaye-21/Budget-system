@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:ota_update/ota_update.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
 import '../providers/pos_provider.dart';
@@ -108,7 +107,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
     });
   }
 
-  void _executeOtaDownload(String apkUrl) {
+  Future<void> _executeOtaDownload(String apkUrl) async {
     if (apkUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('የማሻሻያ ሊንክ አልተገኘም'), backgroundColor: Colors.orange),
@@ -122,36 +121,42 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
       _updateStatusMessage = 'የአዲሱን ስሪት ፋይል በማውረድ ላይ...';
     });
 
-    try {
-      UpdateService.executeUpdate(apkUrl).listen(
-        (OtaEvent event) {
+    await UpdateService.downloadAndInstallApk(
+      apkUrl,
+      onProgress: (progress) {
+        if (mounted) {
           setState(() {
-            if (event.status == OtaStatus.DOWNLOADING) {
-              _downloadProgress = int.tryParse(event.value ?? '0') ?? 0;
-              _updateStatusMessage = 'በማውረድ ላይ: $_downloadProgress%';
-            } else if (event.status == OtaStatus.INSTALLING) {
-              _isDownloadingUpdate = false;
-              _updateStatusMessage = 'መጫኛውን በመክፈት ላይ...';
-            } else if (event.status == OtaStatus.ALREADY_RUNNING_ERROR) {
-              _isDownloadingUpdate = false;
-              _updateStatusMessage = 'ማውረዱ አስቀድሞ እየሰራ ነው';
-            } else if (event.status == OtaStatus.PERMISSION_NOT_GRANTED_ERROR) {
-              _isDownloadingUpdate = false;
-              _updateStatusMessage = 'የመጫን ፈቃድ አልተሰጠም (Enable install unknown apps)';
-            }
+            _downloadProgress = progress;
+            _updateStatusMessage = 'በማውረድ ላይ: $progress%';
           });
-        },
-        onError: (err) {
+        }
+      },
+      onError: (err) {
+        if (mounted) {
           setState(() {
             _isDownloadingUpdate = false;
-            _updateStatusMessage = 'የማውረድ ችግር ተፈጥሯል: $err';
+            _updateStatusMessage = err;
           });
-        },
-      );
-    } catch (e) {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('የማዘመን ስህተት (Update Error)'),
+              content: Text(err),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('እሺ (OK)'),
+                ),
+              ],
+            ),
+          );
+        }
+      },
+    );
+
+    if (mounted) {
       setState(() {
         _isDownloadingUpdate = false;
-        _updateStatusMessage = 'ችግር ተፈጥሯል: $e';
       });
     }
   }
