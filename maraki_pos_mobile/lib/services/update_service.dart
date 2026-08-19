@@ -22,8 +22,8 @@ class AppUpdateInfo {
 }
 
 class UpdateService {
-  static const String currentAppVersion = '2.6.1';
-  static const int currentBuildNumber = 4;
+  static const String currentAppVersion = '2.6.0';
+  static const int currentBuildNumber = 3;
 
   // Default endpoint for remote updates. Can be configured to Supabase / GitHub Releases / Custom API
   static const String defaultUpdateManifestUrl =

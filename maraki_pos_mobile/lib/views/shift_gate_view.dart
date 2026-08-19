@@ -193,7 +193,7 @@ class ShiftGateView extends StatelessWidget {
                           const Text('ሲስተም ዝግጁ ነው • ሎካል & ደመና', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
                         ],
                       ),
-                      const Text('ማራኪ POS v2.6.1', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                      const Text('ማራኪ POS v2.6.0', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
