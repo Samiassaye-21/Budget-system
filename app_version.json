@@ -1,8 +1,8 @@
 {
-  "version": "2.6.2",
-  "buildNumber": 5,
-  "apkUrl": "https://github.com/Samiassaye-21/Budget-system/releases/download/v2.6.2/maraki_pos_arm64.apk",
-  "releaseNotes": "ማራኪ POS v2.6.2 - የላይኛው አስተላልፍ (Top Fire Order) ቁልፍ እና የሞባይል ስክሪን ሙሉ ማስተካከያ (Top Fire Button & Safe Insets)",
+  "version": "2.6.1",
+  "buildNumber": 4,
+  "apkUrl": "https://github.com/Samiassaye-21/Budget-system/releases/download/v2.6.1/maraki_pos_arm64.apk",
+  "releaseNotes": "ማራኪ POS v2.6.1 - የመጨረሻ የተረጋጋ ስሪት (Stable & Zero-Install Auto-Sync)",
   "forceUpdate": false,
-  "updatedAt": "2026-08-19T09:05:00Z"
+  "updatedAt": "2026-08-19T06:45:00Z"
 }
