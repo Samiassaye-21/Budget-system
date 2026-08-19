@@ -27,7 +27,11 @@ class _ShiftReconciliationViewState extends State<ShiftReconciliationView> {
 
   // Step 4 Debt Recovery State
   int _recoveredCups = 0;
-  final double _pricePerCup = 170.0;
+  double get _pricePerCup {
+    final pos = Provider.of<POSProvider>(context, listen: false);
+    final juice = pos.products.where((p) => p.category == 'Juice');
+    return juice.isNotEmpty ? juice.first.price : 170.0;
+  }
 
   // Step 5 Notes
   final TextEditingController _shiftNotesController = TextEditingController();

@@ -288,7 +288,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
         children: [
           Row(
             children: [
-              _buildCategoryPill('🍹 ትኩስ ጁሶች (Juice 170 ETB)', 'Juice', pos),
+              _buildCategoryPill('🍹 ትኩስ ጁሶች (Fresh Juices)', 'Juice', pos),
               const SizedBox(width: 8),
               _buildCategoryPill('🥗 የምግብ አቅራቦት (Food)', 'Food', pos),
             ],

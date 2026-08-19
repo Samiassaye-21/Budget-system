@@ -238,7 +238,7 @@ class _PayLaterModalState extends State<PayLaterModal> {
                                   customerName: name,
                                   note: order.items.map((i) => '${i.name} × ${i.quantity}').join(', '),
                                   cupCount: cupCount,
-                                  pricePerCup: 170.0,
+                                  pricePerCup: cupCount > 0 ? (order.total / cupCount) : 170.0,
                                   amount: order.total,
                                   isRecovered: false,
                                   shiftIdCreated: pos.shiftSession?.id ?? 'shift',

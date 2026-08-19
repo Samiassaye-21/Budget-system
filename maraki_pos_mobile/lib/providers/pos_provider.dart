@@ -47,14 +47,23 @@ class POSProvider extends ChangeNotifier {
   List<Order> get pendingPayLaterOrders =>
       _orders.where((o) => o.paymentMethod == 'Pay later').toList();
 
+  bool isJuiceItem(OrderItem item) {
+    if (item.productId.startsWith('j-')) return true;
+    final matches = _products.where((p) => p.id == item.productId || p.name == item.name || p.amharicName == item.name);
+    if (matches.isNotEmpty) {
+      return matches.first.category == 'Juice';
+    }
+    return !item.productId.startsWith('f-');
+  }
+
   int get shiftJuiceCupsSold => _orders.fold(
         0,
-        (sum, o) => sum + o.items.where((i) => i.price == 170).fold(0, (iSum, item) => iSum + item.quantity),
+        (sum, o) => sum + o.items.where(isJuiceItem).fold(0, (iSum, item) => iSum + item.quantity),
       );
 
   int get shiftFoodSold => _orders.fold(
         0,
-        (sum, o) => sum + o.items.where((i) => i.price != 170).fold(0, (iSum, item) => iSum + item.quantity),
+        (sum, o) => sum + o.items.where((i) => !isJuiceItem(i)).fold(0, (iSum, item) => iSum + item.quantity),
       );
 
   List<KitchenTicket> get shiftKitchenTickets {
