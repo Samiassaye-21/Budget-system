@@ -34,6 +34,7 @@ class _PayLaterModalState extends State<PayLaterModal> {
         });
 
     return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 550, maxHeight: 680),

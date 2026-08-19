@@ -218,21 +218,24 @@ class _KitchenWorkspaceViewState extends State<KitchenWorkspaceView> {
 
   Widget _buildRoutePicker() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('ተቀባዩ ማን ነው? (Choose Recipient Route)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildRouteButton('Day shift', '☀ የቀን ሺፍት', Icons.wb_sunny_rounded, const Color(0xFFC05621), Colors.amber.shade50),
-              const SizedBox(width: 8),
-              _buildRouteButton('Night shift', '☾ የማታ ሺፍት', Icons.nightlight_round, const Color(0xFF6B46C1), Colors.purple.shade50),
-              const SizedBox(width: 8),
-              _buildRouteButton('Bue delivery', '🚚 ቡኤ ዴሊቨሪ', Icons.delivery_dining, const Color(0xFF2B6CB0), Colors.blue.shade50),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildRouteButton('Day shift', '☀ የቀን ሺፍት', Icons.wb_sunny_rounded, const Color(0xFFC05621), Colors.amber.shade50),
+                const SizedBox(width: 8),
+                _buildRouteButton('Night shift', '☾ የማታ ሺፍት', Icons.nightlight_round, const Color(0xFF6B46C1), Colors.purple.shade50),
+                const SizedBox(width: 8),
+                _buildRouteButton('Bue delivery', '🚚 ቡኤ ዴሊቨሪ', Icons.delivery_dining, const Color(0xFF2B6CB0), Colors.blue.shade50),
+              ],
+            ),
           ),
         ],
       ),
@@ -241,39 +244,35 @@ class _KitchenWorkspaceViewState extends State<KitchenWorkspaceView> {
 
   Widget _buildRouteButton(String routeKey, String label, IconData icon, Color color, Color activeBg) {
     final isSelected = _selectedRoute == routeKey;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _selectedRoute = routeKey),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? activeBg : Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? color : Colors.grey.shade300,
-              width: isSelected ? 2 : 1,
-            ),
+    return InkWell(
+      onTap: () => setState(() => _selectedRoute = routeKey),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 110),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? activeBg : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: isSelected ? color : Colors.grey.shade600),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    color: isSelected ? color : const Color(0xFF2D3748),
-                  ),
-                ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 15, color: isSelected ? color : Colors.grey.shade600),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? color : const Color(0xFF2D3748),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -302,13 +301,17 @@ class _KitchenWorkspaceViewState extends State<KitchenWorkspaceView> {
       return const Center(child: Text('ምንም የተገኘ ምግብ የለም', style: TextStyle(color: Colors.grey)));
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double childAspect = screenWidth < 380 ? 0.68 : (screenWidth < 600 ? 0.72 : 0.82);
+    final double maxExtent = screenWidth < 400 ? 180 : 220;
+
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 220,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.82,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: maxExtent,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: childAspect,
       ),
       itemCount: foodProducts.length,
       itemBuilder: (context, index) {
@@ -332,16 +335,17 @@ class _KitchenWorkspaceViewState extends State<KitchenWorkspaceView> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(product.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)),
-                    Text('${product.price.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFC05621))),
-                    const SizedBox(height: 6),
+                    Text(product.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+                    Text('${product.price.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFC05621))),
+                    const SizedBox(height: 4),
                     SizedBox(
                       width: double.infinity,
-                      height: 32,
+                      height: 28,
                       child: ElevatedButton.icon(
                         onPressed: () => _handleAddItem(product),
                         icon: const Icon(Icons.add, size: 14, color: Colors.white),

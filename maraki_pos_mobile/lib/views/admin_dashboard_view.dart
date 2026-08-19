@@ -369,66 +369,81 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
     final double creditSales = orders.where((o) => o.paymentMethod == 'Credit' || o.paymentMethod == 'Pay later').fold(0.0, (sum, o) => sum + o.total);
     final double deliverySales = orders.where((o) => o.paymentMethod == 'Delivery').fold(0.0, (sum, o) => sum + o.total);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('የዛሬ የሽያጭ አጠቃላይ ሪፖርት (Sales Analytics)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 16),
+    final cards = [
+      _buildAnalyticsCard('ጠቅላላ ገቢ (Gross)', '${totalGross.toStringAsFixed(0)} ETB', '${orders.length} ትዕዛዞች', Colors.blue, Icons.payments),
+      _buildAnalyticsCard('ጥሬ ገንዘብ (Cash)', '${cashSales.toStringAsFixed(0)} ETB', 'በካሽ የተከፈለ', Colors.green, Icons.wallet),
+      _buildAnalyticsCard('ባንክ/ቴሌብር (Transfer)', '${transferSales.toStringAsFixed(0)} ETB', 'በሞባይል የገባ', Colors.purple, Icons.smartphone),
+      _buildAnalyticsCard('ብድር/በኋላ (Credit)', '${creditSales.toStringAsFixed(0)} ETB', 'ያልተሰበሰበ', Colors.orange, Icons.receipt_long),
+      _buildAnalyticsCard('ቡኤ ዴሊቨሪ (Delivery)', '${deliverySales.toStringAsFixed(0)} ETB', 'የዴሊቨሪ ሽያጭ', Colors.teal, Icons.delivery_dining),
+      _buildAnalyticsCard('የተሸጡ ብርጭቆዎች', '${pos.shiftJuiceCupsSold} ብርጭቆ', 'ጠቅላላ ጁስ', Colors.amber, Icons.local_drink),
+    ];
 
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossCount = constraints.maxWidth < 600 ? 2 : 3;
+        final childAspect = constraints.maxWidth < 380 ? 1.1 : (constraints.maxWidth < 600 ? 1.25 : 1.4);
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildAnalyticsCard('ጠቅላላ ገቢ (Gross Revenue)', '${totalGross.toStringAsFixed(0)} ETB', '${orders.length} ትዕዛዞች', Colors.blue, Icons.payments),
-              const SizedBox(width: 12),
-              _buildAnalyticsCard('ጥሬ ገንዘብ (Cash)', '${cashSales.toStringAsFixed(0)} ETB', 'በካሽ የተከፈለ', Colors.green, Icons.wallet),
-              const SizedBox(width: 12),
-              _buildAnalyticsCard('ባንክ/ቴሌብር (Transfer)', '${transferSales.toStringAsFixed(0)} ETB', 'በሞባይል የገባ', Colors.purple, Icons.smartphone),
+              const Text('የዛሬ የሽያጭ አጠቃላይ ሪፖርት (Sales Analytics)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 16),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: crossCount,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: childAspect,
+                children: cards,
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildAnalyticsCard('ብድር/በኋላ (Credit & Pay Later)', '${creditSales.toStringAsFixed(0)} ETB', 'ያልተሰበሰበ', Colors.orange, Icons.receipt_long),
-              const SizedBox(width: 12),
-              _buildAnalyticsCard('ቡኤ ዴሊቨሪ (Delivery)', '${deliverySales.toStringAsFixed(0)} ETB', 'የዴሊቨሪ ሽያጭ', Colors.teal, Icons.delivery_dining),
-              const SizedBox(width: 12),
-              _buildAnalyticsCard('የተሸጡ ብርጭቆዎች', '${pos.shiftJuiceCupsSold} ብርጭቆ', 'ጠቅላላ ጁስ', Colors.amber, Icons.local_drink),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildAnalyticsCard(String title, String value, String subtitle, MaterialColor color, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: color.shade50, borderRadius: BorderRadius.circular(10)),
-              child: Icon(icon, size: 20, color: color.shade700),
-            ),
-            const SizedBox(height: 10),
-            Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
-            const SizedBox(height: 4),
-            Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color.shade900)),
-            const SizedBox(height: 2),
-            Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(color: color.shade50, borderRadius: BorderRadius.circular(8)),
+                child: Icon(icon, size: 16, color: color.shade700),
+              ),
+              Flexible(
+                child: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 9, color: Colors.grey.shade500)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
+              const SizedBox(height: 2),
+              Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: color.shade900)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -445,10 +460,13 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
-              Text('ያልተሰበሰቡ የደንበኞች ብድሮች (${debts.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+              Text('ያልተሰበሰቡ የደንበኞች ብድሮች (${debts.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.shade200)),

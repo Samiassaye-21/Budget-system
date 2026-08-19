@@ -73,37 +73,38 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 1,
-            titleSpacing: 16,
+            titleSpacing: isTablet ? 16 : 8,
             title: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: Colors.amber.shade50,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.amber.shade300),
                   ),
-                  child: const Text('🍊', style: TextStyle(fontSize: 16)),
+                  child: const Text('🍊', style: TextStyle(fontSize: 14)),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 const Text(
                   'ማራኪ POS',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: pos.shiftSession?.shiftType == ShiftType.day ? Colors.amber.shade50 : Colors.purple.shade50,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: pos.shiftSession?.shiftType == ShiftType.day ? Colors.amber.shade300 : Colors.purple.shade300,
                     ),
                   ),
                   child: Text(
-                    pos.shiftSession?.shiftType == ShiftType.day ? '☀ የቀን ሺፍት' : '☾ የማታ ሺፍት',
+                    pos.shiftSession?.shiftType == ShiftType.day ? '☀ ቀን' : '☾ ማታ',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: pos.shiftSession?.shiftType == ShiftType.day ? const Color(0xFFC05621) : const Color(0xFF6B46C1),
                     ),
@@ -115,8 +116,8 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
               // Pay Later Alert Badge in Top Bar
               if (pos.pendingPayLaterOrders.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                  child: OutlinedButton.icon(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                  child: IconButton(
                     onPressed: () {
                       showDialog(
                         context: context,
@@ -125,38 +126,43 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.schedule, size: 14, color: Color(0xFFC05621)),
-                    label: Text(
-                      '${pos.pendingPayLaterOrders.length} Pay Later',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFC05621)),
+                    icon: Badge(
+                      label: Text('${pos.pendingPayLaterOrders.length}', style: const TextStyle(fontSize: 9)),
+                      child: const Icon(Icons.schedule, size: 20, color: Color(0xFFC05621)),
                     ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.amber.shade50,
-                      side: BorderSide(color: Colors.amber.shade300),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
+                    tooltip: 'Pay Later (${pos.pendingPayLaterOrders.length})',
                   ),
                 ),
 
               // Shift Reconciliation Button
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                child: ElevatedButton.icon(
-                  onPressed: () => _handleOpenReconciliation(context, pos),
-                  icon: const Icon(Icons.lock_clock, size: 16, color: Colors.white),
-                  label: const Text(
-                    'የሺፍት ማጠቃለያ',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53E3E),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                child: isTablet
+                    ? ElevatedButton.icon(
+                        onPressed: () => _handleOpenReconciliation(context, pos),
+                        icon: const Icon(Icons.lock_clock, size: 16, color: Colors.white),
+                        label: const Text(
+                          'የሺፍት ማጠቃለያ',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE53E3E),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      )
+                    : IconButton.filled(
+                        onPressed: () => _handleOpenReconciliation(context, pos),
+                        icon: const Icon(Icons.lock_clock, size: 18, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFE53E3E),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        tooltip: 'የሺፍት ማጠቃለያ',
+                      ),
               ),
               IconButton(
                 onPressed: () => pos.setMode(AppMode.gate),
-                icon: const Icon(Icons.exit_to_app, color: Colors.grey),
+                icon: const Icon(Icons.exit_to_app, color: Colors.grey, size: 20),
                 tooltip: 'ወደ በር ተመለስ',
               ),
             ],
@@ -353,13 +359,17 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
       return const Center(child: Text('ምንም የተገኘ እቃ የለም', style: TextStyle(color: Colors.grey)));
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double childAspect = screenWidth < 380 ? 0.68 : (screenWidth < 600 ? 0.72 : 0.82);
+    final double maxExtent = screenWidth < 400 ? 180 : 220;
+
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 220,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.78,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: maxExtent,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: childAspect,
       ),
       itemCount: filtered.length,
       itemBuilder: (context, index) {
@@ -402,25 +412,25 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                     alignment: Alignment.center,
                     child: const Text(
                       'አልቋል (Sold Out)',
-                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
                 // Quick Stock Toggle in top right
                 Positioned(
-                  top: 6,
-                  right: 6,
+                  top: 4,
+                  right: 4,
                   child: InkWell(
                     onTap: () => pos.toggleProductAvailability(product.id),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                       decoration: BoxDecoration(
                         color: product.isAvailable ? Colors.green.shade600 : Colors.red.shade600,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         product.isAvailable ? 'አለ' : 'የለም',
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ),
                   ),
@@ -429,40 +439,43 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   product.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
                 ),
                 Text(
                   product.amharicName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${product.price.toStringAsFixed(0)} ETB',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E)),
+                    Flexible(
+                      child: Text(
+                        '${product.price.toStringAsFixed(0)} ETB',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E)),
+                      ),
                     ),
                     InkWell(
                       onTap: product.isAvailable ? () => pos.addToCart(product) : null,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                       child: Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           color: product.isAvailable ? const Color(0xFFE53E3E) : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Icon(Icons.add, size: 16, color: Colors.white),
+                        child: const Icon(Icons.add, size: 14, color: Colors.white),
                       ),
                     ),
                   ],
@@ -654,15 +667,17 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
 
   Widget _buildBottomStatusBar(POSProvider pos, int cupsUsed, int cupsRemaining, double revenue, BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Colors.grey.shade200)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -670,26 +685,33 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                 child: Text('$cupsUsed ጥቅም ላይ ውሏል / $cupsRemaining ይቀራል', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
               ),
               const SizedBox(width: 8),
-              if (pos.pendingPayLaterOrders.isNotEmpty)
+              if (pos.pendingPayLaterOrders.isNotEmpty) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(color: Colors.orange.shade100, borderRadius: BorderRadius.circular(8)),
                   child: Text('${pos.pendingPayLaterOrders.length} ያልተከፈሉ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange.shade900)),
                 ),
+                const SizedBox(width: 8),
+              ],
+              InkWell(
+                onTap: () => _handleOpenReconciliation(context, pos),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('የዛሬ ሽያጭ: ', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      Text('${revenue.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E))),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
-          InkWell(
-            onTap: () => _handleOpenReconciliation(context, pos),
-            child: Row(
-              children: [
-                const Text('የዛሬ ሽያጭ: ', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                Text('${revenue.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E))),
-                const SizedBox(width: 4),
-                const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

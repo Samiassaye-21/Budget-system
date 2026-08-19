@@ -73,55 +73,87 @@ class ShiftGateView extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   // Shift Selection Cards
-                  Row(
-                    children: [
-                      // Day Shift
-                      Expanded(
-                        child: _buildShiftCard(
-                          context,
-                          title: 'የቀን ሺፍት (Day Shift)',
-                          time: '8:00 AM – 4:00 PM',
-                          icon: Icons.wb_sunny_rounded,
-                          iconColor: const Color(0xFFD69E2E),
-                          bgColor: const Color(0xFFFFFDF5),
-                          borderColor: const Color(0xFFECC94B),
-                          onTap: () => pos.selectShift(ShiftType.day),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Night Shift
-                      Expanded(
-                        child: _buildShiftCard(
-                          context,
-                          title: 'የማታ ሺፍት (Night Shift)',
-                          time: '4:00 PM – 11:30 PM',
-                          icon: Icons.nightlight_round,
-                          iconColor: const Color(0xFF6B46C1),
-                          bgColor: const Color(0xFFFAF5FF),
-                          borderColor: const Color(0xFFB794F4),
-                          onTap: () => pos.selectShift(ShiftType.night),
-                        ),
-                      ),
-                    ],
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 450;
+                      if (isNarrow) {
+                        return Column(
+                          children: [
+                            _buildShiftCard(
+                              context,
+                              title: 'የቀን ሺፍት (Day Shift)',
+                              time: '8:00 AM – 4:00 PM',
+                              icon: Icons.wb_sunny_rounded,
+                              iconColor: const Color(0xFFD69E2E),
+                              bgColor: const Color(0xFFFFFDF5),
+                              borderColor: const Color(0xFFECC94B),
+                              onTap: () => pos.selectShift(ShiftType.day),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildShiftCard(
+                              context,
+                              title: 'የማታ ሺፍት (Night Shift)',
+                              time: '4:00 PM – 11:30 PM',
+                              icon: Icons.nightlight_round,
+                              iconColor: const Color(0xFF6B46C1),
+                              bgColor: const Color(0xFFFAF5FF),
+                              borderColor: const Color(0xFFB794F4),
+                              onTap: () => pos.selectShift(ShiftType.night),
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: _buildShiftCard(
+                              context,
+                              title: 'የቀን ሺፍት (Day Shift)',
+                              time: '8:00 AM – 4:00 PM',
+                              icon: Icons.wb_sunny_rounded,
+                              iconColor: const Color(0xFFD69E2E),
+                              bgColor: const Color(0xFFFFFDF5),
+                              borderColor: const Color(0xFFECC94B),
+                              onTap: () => pos.selectShift(ShiftType.day),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildShiftCard(
+                              context,
+                              title: 'የማታ ሺፍት (Night Shift)',
+                              time: '4:00 PM – 11:30 PM',
+                              icon: Icons.nightlight_round,
+                              iconColor: const Color(0xFF6B46C1),
+                              bgColor: const Color(0xFFFAF5FF),
+                              borderColor: const Color(0xFFB794F4),
+                              onTap: () => pos.selectShift(ShiftType.night),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   // Workspace Alternate Links (Kitchen & Admin)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
                       OutlinedButton.icon(
                         onPressed: () => pos.setMode(AppMode.kitchen),
                         icon: const Icon(Icons.restaurant_menu, size: 18, color: Color(0xFF2D3748)),
                         label: const Text('የወጥ ቤት ማሳያ (Kitchen)', style: TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.bold)),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           side: BorderSide(color: Colors.grey.shade300),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
-                      const SizedBox(width: 16),
                       OutlinedButton.icon(
                         onPressed: () {
                           showDialog(
@@ -136,7 +168,7 @@ class ShiftGateView extends StatelessWidget {
                         icon: const Icon(Icons.admin_panel_settings, size: 18, color: Color(0xFF2D3748)),
                         label: const Text('አድሚን (Admin)', style: TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.bold)),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           side: BorderSide(color: Colors.grey.shade300),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -144,20 +176,24 @@ class ShiftGateView extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 24),
                   const Divider(),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  const SizedBox(height: 10),
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
                           const SizedBox(width: 6),
                           const Text('ሲስተም ዝግጁ ነው • ሎካል & ደመና', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
                         ],
                       ),
-                      const Text('ማራኪ POS v2.6.0', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                      const Text('ማራኪ POS v2.6.1', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
