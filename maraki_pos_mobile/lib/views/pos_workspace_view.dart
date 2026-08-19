@@ -239,7 +239,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
             color: Colors.white,
             border: Border(left: BorderSide(color: Colors.grey.shade200, width: 1.5)),
           ),
-          child: _buildCartPanel(context, pos),
+          child: _buildCartPanel(context, pos, isSheet: false),
         ),
       ],
     );
@@ -488,19 +488,34 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
     );
   }
 
-  Widget _buildCartPanel(BuildContext context, POSProvider pos) {
+  void _handleFireOrder(BuildContext context, POSProvider pos, {bool isSheet = false}) {
+    if (pos.currentCart.isEmpty) return;
+    final success = pos.fireOrder();
+    if (success) {
+      _notesController.clear();
+      if (isSheet && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      _triggerSuccessToast();
+    }
+  }
+
+  Widget _buildCartPanel(BuildContext context, POSProvider pos, {bool isSheet = false}) {
     return Column(
       children: [
-        // Cart Header
+        // Cart Header with Top Submit Action
         Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.receipt, color: Color(0xFF1A202C)),
+                  const Icon(Icons.receipt, color: Color(0xFF1A202C), size: 20),
                   const SizedBox(width: 8),
                   const Text('የአሁኑ ትዕዛዝ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
                   const SizedBox(width: 6),
@@ -511,14 +526,35 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                   ),
                 ],
               ),
-              if (pos.currentCart.isNotEmpty)
-                TextButton(
-                  onPressed: () {
-                    pos.clearCart();
-                    _notesController.clear();
-                  },
-                  child: const Text('አጽዳ', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
+              Row(
+                children: [
+                  if (pos.currentCart.isNotEmpty)
+                    TextButton(
+                      onPressed: () {
+                        pos.clearCart();
+                        _notesController.clear();
+                      },
+                      child: const Text('አጽዳ', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  // Prominent Top Fire Order Button (for instant tap on phones)
+                  if (pos.currentCart.isNotEmpty) ...[
+                    const SizedBox(width: 4),
+                    ElevatedButton.icon(
+                      onPressed: () => _handleFireOrder(context, pos, isSheet: isSheet),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE53E3E),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.local_fire_department, color: Colors.white, size: 16),
+                      label: const Text(
+                        'አስተላልፍ',
+                        style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
@@ -576,78 +612,77 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                 ),
         ),
 
-        // Order Notes & Payment Methods & Fire Order
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            border: Border(top: BorderSide(color: Colors.grey.shade200)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Order Notes Field
-              TextField(
-                controller: _notesController,
-                onChanged: (val) => pos.setOrderNotes(val),
-                decoration: InputDecoration(
-                  hintText: 'ልዩ ማስታወሻ ይጻፉ (Order notes)...',
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              const Text('የክፍያ መንገድ (Payment Method)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _buildPaymentChip('ጥሬ ገንዘብ', 'Cash', pos),
-                  _buildPaymentChip('ባንክ/ቴሌብር', 'Transfer', pos),
-                  _buildPaymentChip('በኋላ (Pay later)', 'Pay later', pos),
-                  _buildPaymentChip('በብድር', 'Credit', pos),
-                  _buildPaymentChip('ዴሊቨሪ', 'Delivery', pos),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Total & Fire Button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('ጠቅላላ ክፍያ (Net Total):', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  Text('${pos.cartTotal.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E))),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: pos.currentCart.isEmpty
-                      ? null
-                      : () {
-                          final success = pos.fireOrder();
-                          if (success) {
-                            _notesController.clear();
-                            _triggerSuccessToast();
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53E3E),
-                    disabledBackgroundColor: Colors.grey.shade300,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // Order Notes & Payment Methods & Bottom Fire Order Button
+        SafeArea(
+          top: false,
+          bottom: true,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              border: Border(top: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Order Notes Field
+                TextField(
+                  controller: _notesController,
+                  onChanged: (val) => pos.setOrderNotes(val),
+                  decoration: InputDecoration(
+                    hintText: 'ልዩ ማስታወሻ ይጻፉ (Order notes)...',
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
                   ),
-                  icon: const Icon(Icons.local_fire_department, color: Colors.white),
-                  label: const Text('ትዕዛዝ አስተላልፍ (Fire Order)', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+
+                const Text('የክፍያ መንገድ (Payment Method)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _buildPaymentChip('ጥሬ ገንዘብ', 'Cash', pos),
+                    _buildPaymentChip('ባንክ/ቴሌብር', 'Transfer', pos),
+                    _buildPaymentChip('በኋላ (Pay later)', 'Pay later', pos),
+                    _buildPaymentChip('በብድር', 'Credit', pos),
+                    _buildPaymentChip('ዴሊቨሪ', 'Delivery', pos),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Total & Fire Button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('ጠቅላላ ክፍያ (Net Total):', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    Text('${pos.cartTotal.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E))),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: pos.currentCart.isEmpty
+                        ? null
+                        : () => _handleFireOrder(context, pos, isSheet: isSheet),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE53E3E),
+                      disabledBackgroundColor: Colors.grey.shade300,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.local_fire_department, color: Colors.white),
+                    label: const Text('ትዕዛዝ አስተላልፍ (Fire Order)', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -720,10 +755,11 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.75,
-        child: _buildCartPanel(context, pos),
+        height: MediaQuery.of(context).size.height * 0.90,
+        child: _buildCartPanel(context, pos, isSheet: true),
       ),
     );
   }
