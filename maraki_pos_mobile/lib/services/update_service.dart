@@ -30,11 +30,15 @@ class UpdateService {
       'https://raw.githubusercontent.com/Samiassaye-21/Budget-system/main/app_version.json';
 
   static Future<AppUpdateInfo> checkForUpdate({String? customUrl}) async {
-    final manifestUrl = customUrl ?? defaultUpdateManifestUrl;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final manifestUrl = customUrl ?? '$defaultUpdateManifestUrl?t=$timestamp';
 
     try {
       final response = await http
-          .get(Uri.parse(manifestUrl))
+          .get(
+            Uri.parse(manifestUrl),
+            headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'},
+          )
           .timeout(const Duration(seconds: 6));
 
       if (response.statusCode == 200) {
