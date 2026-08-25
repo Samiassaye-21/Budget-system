@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/pos_provider.dart';
 import '../services/data_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/pin_pad_dialog.dart';
 
 class CupSetupView extends StatefulWidget {
@@ -42,7 +43,7 @@ class _CupSetupViewState extends State<CupSetupView> {
     final bool canProceed = (isMatched || _isAdminApproved) && isEntered && enteredCount >= 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFC),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -66,12 +67,36 @@ class _CupSetupViewState extends State<CupSetupView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Back Link
-                    TextButton.icon(
-                      onPressed: () => pos.setMode(AppMode.gate),
-                      icon: const Icon(Icons.arrow_back, size: 16, color: Colors.grey),
-                      label: const Text('የስራ ቦታ ይለውጡ', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                      style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                    // Back Link & Brand Logo
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => pos.setMode(AppMode.gate),
+                          icon: const Icon(Icons.arrow_back, size: 16, color: Colors.grey),
+                          label: const Text('ወደ ሺፍት መረጣ', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          style: TextButton.styleFrom(padding: EdgeInsets.zero, alignment: Alignment.centerLeft),
+                        ),
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.amber.shade300, width: 1.5),
+                          ),
+                          child: ClipOval(
+                            child: Padding(
+                              padding: const EdgeInsets.all(2),
+                              child: Image.asset(
+                                'assets/logo.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => const Icon(Icons.storefront, size: 16, color: Colors.amber),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
 
@@ -92,7 +117,7 @@ class _CupSetupViewState extends State<CupSetupView> {
                     const SizedBox(height: 16),
 
                     Text(
-                      shift == ShiftType.day ? '☀ የቀን ሺፍት / ሬጅስተር መክፈቻ' : '☾ የማታ ሺፍት / ሬጅስተር መክፈቻ',
+                      shift == ShiftType.day ? 'የቀን ሺፍት / ሬጅስተር መክፈቻ' : 'የማታ ሺፍት / ሬጅስተር መክፈቻ',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -112,6 +137,27 @@ class _CupSetupViewState extends State<CupSetupView> {
                     Text(
                       'ከቀደመው ሺፍት የተረፈውን የብርጭቆ ብዛት በአካል ቆጥረው ያስገቡ። ቆጠራው ከቀደመው ሺፍት ርክክብ ጋር ይረጋገጣል።',
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.schedule, size: 14, color: AppColors.primary),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '${DateHelper.todayFormatted()} • ⏰ ${DateHelper.shiftOperatingHours(shift.name)}',
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.obsidian),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -150,15 +196,15 @@ class _CupSetupViewState extends State<CupSetupView> {
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xFFE53E3E), width: 2),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 2),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xFFE53E3E), width: 2),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       ),
@@ -300,7 +346,8 @@ class _CupSetupViewState extends State<CupSetupView> {
                                 context: context,
                                 builder: (ctx) => PinPadDialog(
                                   title: 'የአድሚን ፈቃድ ማረጋገጫ (Admin Approval)',
-                                  subtitle: 'የብርጭቆ ልዩነትን አጽድቆ ሺፍት ለመጀመር የአድሚን 4-ዲጂት PIN ያስገቡ',
+                                  subtitle: 'የብርጭቆ ልዩነትን አጽድቆ ሺፍት ለመጀመር የአድሚን 4-ዲጂት PIN ያስገቡ (ነባሪ: ${pos.adminPin})',
+                                  requiredPin: pos.adminPin,
                                   onConfirm: (pin) {
                                     setState(() {
                                       _isAdminApproved = true;
@@ -309,14 +356,14 @@ class _CupSetupViewState extends State<CupSetupView> {
                                 ),
                               );
                             },
-                            icon: const Icon(Icons.lock, size: 16, color: Color(0xFFC05621)),
+                            icon: const Icon(Icons.lock, size: 16, color: AppColors.primary),
                             label: const Text(
                               'ልዩነቱን በአድሚን PIN አጽድቅ (Approve with Admin PIN)',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFC05621)),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
                             ),
                             style: OutlinedButton.styleFrom(
-                              backgroundColor: Colors.amber.shade50,
-                              side: BorderSide(color: Colors.amber.shade300),
+                              backgroundColor: AppColors.primarySoft,
+                              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
@@ -337,10 +384,10 @@ class _CupSetupViewState extends State<CupSetupView> {
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE53E3E),
-                          disabledBackgroundColor: Colors.grey.shade300,
+                          backgroundColor: AppColors.primary,
+                          disabledBackgroundColor: AppColors.border,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          elevation: canProceed ? 4 : 0,
+                          elevation: canProceed ? 2 : 0,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,

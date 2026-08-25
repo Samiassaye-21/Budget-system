@@ -5,8 +5,8 @@
     "amharicName": "ማራኪ ኮመቦ ሳላድ",
     "category": "Food",
     "price": 430.0,
-    "description": "Maraki combo salad",
-    "imageUrl": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop&q=60",
+    "description": "ማንጎ ጁስ ከሳላድ ጋር (Mango juice with salad)",
+    "imageUrl": "/products/maraki_special.png",
     "isAvailable": true
   },
   {
@@ -16,7 +16,7 @@
     "category": "Food",
     "price": 320.0,
     "description": "Fresh garden salad",
-    "imageUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/fritsalad.jpg",
     "isAvailable": true
   },
   {
@@ -26,7 +26,7 @@
     "category": "Food",
     "price": 320.0,
     "description": "Pasta served with salad",
-    "imageUrl": "https://images.unsplash.com/photo-1621996346565-e3def616403c?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/pasta_with_salad.jpg",
     "isAvailable": true
   },
   {
@@ -36,7 +36,7 @@
     "category": "Food",
     "price": 320.0,
     "description": "Rice served with salad",
-    "imageUrl": "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/rice_salad.jpg",
     "isAvailable": true
   },
   {
@@ -46,7 +46,7 @@
     "category": "Food",
     "price": 320.0,
     "description": "Pasta with vegetables",
-    "imageUrl": "https://images.unsplash.com/photo-1621996346565-e3def616403c?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/pastawithvegitable.jpg",
     "isAvailable": true
   },
   {
@@ -56,7 +56,7 @@
     "category": "Food",
     "price": 320.0,
     "description": "Rice with vegetables",
-    "imageUrl": "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/ricewithvegitable.jpg",
     "isAvailable": true
   },
   {
@@ -66,7 +66,7 @@
     "category": "Food",
     "price": 320.0,
     "description": "Pasta with egg",
-    "imageUrl": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/pasta_with_egg.jpg",
     "isAvailable": true
   },
   {
@@ -76,7 +76,7 @@
     "category": "Food",
     "price": 320.0,
     "description": "Rice with egg",
-    "imageUrl": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/ricewithvegitable.jpg",
     "isAvailable": true
   },
   {
@@ -86,7 +86,7 @@
     "category": "Food",
     "price": 230.0,
     "description": "Egg firfir",
-    "imageUrl": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/enkulal_firfir.jpg",
     "isAvailable": true
   },
   {
@@ -96,7 +96,7 @@
     "category": "Food",
     "price": 230.0,
     "description": "Egg sils sauce",
-    "imageUrl": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/pastawithtomatosause.jpg",
     "isAvailable": true
   },
   {
@@ -106,7 +106,7 @@
     "category": "Food",
     "price": 120.0,
     "description": "Egg sandwich",
-    "imageUrl": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/enkulal_sandwich.jpg",
     "isAvailable": true
   },
   {
@@ -116,7 +116,7 @@
     "category": "Food",
     "price": 100.0,
     "description": "Vegetable sandwich",
-    "imageUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/fritsalad.jpg",
     "isAvailable": true
   },
   {
@@ -126,7 +126,7 @@
     "category": "Food",
     "price": 320.0,
     "description": "Fresh fruit punch bowl",
-    "imageUrl": "https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/fruitpunch.jpg",
     "isAvailable": true
   },
   {
@@ -136,7 +136,7 @@
     "category": "Food",
     "price": 200.0,
     "description": "Traditional firfir",
-    "imageUrl": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/firfir.webp",
     "isAvailable": true
   },
   {
@@ -146,7 +146,7 @@
     "category": "Food",
     "price": 200.0,
     "description": "Pasta with sauce",
-    "imageUrl": "https://images.unsplash.com/photo-1621996346565-e3def616403c?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/pastawithtomatosause.jpg",
     "isAvailable": true
   },
   {
@@ -156,7 +156,7 @@
     "category": "Food",
     "price": 200.0,
     "description": "Tasty soya",
-    "imageUrl": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/protin.jpg",
     "isAvailable": true
   },
   {
@@ -166,7 +166,7 @@
     "category": "Food",
     "price": 380.0,
     "description": "Fresh tuna salad with vegetables",
-    "imageUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/fritsalad.jpg",
     "isAvailable": true
   },
   {
@@ -176,7 +176,7 @@
     "category": "Food",
     "price": 250.0,
     "description": "Traditional chechebsa with honey & butter",
-    "imageUrl": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/special.jpg",
     "isAvailable": true
   },
   {
@@ -186,7 +186,7 @@
     "category": "Juice",
     "price": 170.0,
     "description": "Fresh creamy avocado juice",
-    "imageUrl": "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/avocado.jpg",
     "isAvailable": true
   },
   {
@@ -196,17 +196,17 @@
     "category": "Juice",
     "price": 170.0,
     "description": "Layered avocado & mango juice",
-    "imageUrl": "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/avocado.png",
     "isAvailable": true
   },
   {
     "id": "j-3",
-    "name": "Special Spris",
-    "amharicName": "ስፕሪስ ጁስ",
+    "name": "Special Juice",
+    "amharicName": "ስፔሻል ጁስ",
     "category": "Juice",
     "price": 170.0,
-    "description": "Signature mixed layered sprize juice",
-    "imageUrl": "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=500&auto=format&fit=crop&q=60",
+    "description": "Signature mixed layered special juice",
+    "imageUrl": "/products/special.jpg",
     "isAvailable": true
   },
   {
@@ -216,7 +216,7 @@
     "category": "Juice",
     "price": 170.0,
     "description": "Creamy cold milk shake smoothie",
-    "imageUrl": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/protin.jpg",
     "isAvailable": true
   },
   {
@@ -226,7 +226,7 @@
     "category": "Juice",
     "price": 170.0,
     "description": "Sweet tropical mango blend",
-    "imageUrl": "https://images.unsplash.com/photo-1546173159-315724a31696?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/mango.jpg",
     "isAvailable": true
   },
   {
@@ -236,7 +236,7 @@
     "category": "Juice",
     "price": 170.0,
     "description": "Pure sun-ripened papaya nectar",
-    "imageUrl": "https://images.unsplash.com/photo-1517456793572-1d8efd6dc135?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/papaya.jpg",
     "isAvailable": true
   },
   {
@@ -246,7 +246,7 @@
     "category": "Juice",
     "price": 170.0,
     "description": "Fresh strawberry blend",
-    "imageUrl": "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/strawberryjuice.jpg",
     "isAvailable": true
   },
   {
@@ -256,7 +256,7 @@
     "category": "Juice",
     "price": 170.0,
     "description": "Fresh pressed pineapple juice",
-    "imageUrl": "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/pineapplejuice.jpg",
     "isAvailable": true
   },
   {
@@ -266,7 +266,7 @@
     "category": "Juice",
     "price": 170.0,
     "description": "Cold fresh watermelon juice",
-    "imageUrl": "https://images.unsplash.com/photo-1589733955941-5eeaf752f6dd?w=500&auto=format&fit=crop&q=60",
+    "imageUrl": "/products/watermillonjuice.jpg",
     "isAvailable": true
   }
 ]

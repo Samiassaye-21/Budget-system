@@ -153,7 +153,7 @@ export function PayLaterResolutionModal({
         <div className="bg-amber-100/60 px-6 py-3 border-b border-amber-200/80 flex items-center gap-2.5 text-xs text-amber-900 font-medium">
           <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
           <span>
-            ሺፍቱን ከመዝጋትዎ በፊት <strong>{totalCount}</strong> የPay Later ትዕዛዞችን ወደ <strong>ጥሬ ገንዘብ (Cash)</strong>፣ <strong>ባንክ (Transfer)</strong> ወይም <strong>ያልተከፈለ ብድር (Pending Debt)</strong> መመደብ ግዴታ ነው።
+            ሺፍቱን ከመዝጋትዎ በፊት <strong>{totalCount}</strong> የPay Later ትዕዛዞችን ወደ <strong>ጥሬ ገንዘብ (Cash)</strong>፣ <strong>ባንክ (Transfer)</strong> ወይም <strong>ያልተከፈለ አዳሪ (Pending Adari)</strong> መመደብ ግዴታ ነው።
           </span>
         </div>
 
@@ -305,8 +305,8 @@ export function PayLaterResolutionModal({
                       )}
                     </div>
                     <div>
-                      <strong className="text-xs font-extrabold text-purple-950 block">ያልተከፈለ ብድር (Credit)</strong>
-                      <span className="text-[10px] text-purple-700 block mt-0.5">አልተከፈለም - ወደ ብድር ይመዝገብ</span>
+                      <strong className="text-xs font-extrabold text-purple-950 block">ያልተከፈለ አዳሪ (Adari)</strong>
+                      <span className="text-[10px] text-purple-700 block mt-0.5">አልተከፈለም - ወደ አዳሪ ይመዝገብ</span>
                     </div>
                   </button>
 
@@ -332,7 +332,7 @@ export function PayLaterResolutionModal({
                       className="w-full bg-white border border-purple-300 rounded-lg p-2.5 text-xs font-semibold outline-purple-600 shadow-inner"
                     />
                     <span className="text-[10px] text-purple-600 mt-1 block">
-                      ይህ ትዕዛዝ በደንበኛ ብድር መዝገብ ላይ ይመዘገባል እና በቀጣይ ሺፍት ይሰበሰባል።
+                      ይህ ትዕዛዝ በደንበኛ አዳሪ መዝገብ ላይ ይመዘገባል እና በቀጣይ ሺፍት ይሰበሰባል።
                     </span>
                   </div>
                 )}
@@ -384,7 +384,7 @@ export function PayLaterResolutionModal({
               <span className="w-2 h-2 rounded-full bg-blue-500" /> {transferCount} ባንክ
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-purple-500" /> {pendingCount} ብድር
+              <span className="w-2 h-2 rounded-full bg-purple-500" /> {pendingCount} አዳሪ
             </span>
           </div>
 

@@ -266,7 +266,7 @@ export function ShiftReconciliationModal({
             <span className={step === 1 ? 'text-primary font-bold' : ''}>1. ሽያጭ</span>
             <span className={step === 2 ? 'text-primary font-bold' : ''}>2. የብርጭቆ ቆጠራ</span>
             <span className={step === 3 ? 'text-primary font-bold' : ''}>3. ወጪዎች</span>
-            <span className={step === 4 ? 'text-primary font-bold' : ''}>4. የተሰበሰበ ብድር</span>
+            <span className={step === 4 ? 'text-primary font-bold' : ''}>4. የተሰበሰበ አዳሪ</span>
             <span className={step === 5 ? 'text-primary font-bold' : ''}>5. ርክክብ እና ቁልፍ</span>
           </div>
         </div>
@@ -295,7 +295,7 @@ export function ShiftReconciliationModal({
                   <strong className="text-base text-blue-800 font-bold block mt-1">{transferSales.toFixed(0)} <small className="text-[10px]">ETB</small></strong>
                 </div>
                 <div className="metric p-3 bg-purple-50 rounded-xl border border-purple-100">
-                  <span className="text-[10px] text-purple-700 font-medium">በብድር</span>
+                  <span className="text-[10px] text-purple-700 font-medium">አዳሪ (Adari)</span>
                   <strong className="text-base text-purple-800 font-bold block mt-1">{creditSales.toFixed(0)} <small className="text-[10px]">ETB</small></strong>
                 </div>
                 <div className="metric p-3 bg-amber-50 rounded-xl border border-amber-100">
@@ -335,7 +335,7 @@ export function ShiftReconciliationModal({
                               o.paymentMethod === 'Transfer' ? 'bg-blue-100 text-blue-800' :
                               o.paymentMethod === 'Credit' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-700'
                             }`}>
-                              {o.paymentMethod === 'Cash' ? 'ጥሬ ገንዘብ' : o.paymentMethod === 'Transfer' ? 'ባንክ' : o.paymentMethod === 'Credit' ? 'ያልተከፈለ ብድር' : o.paymentMethod}
+                              {o.paymentMethod === 'Cash' ? 'ጥሬ ገንዘብ' : o.paymentMethod === 'Transfer' ? 'ባንክ' : o.paymentMethod === 'Credit' ? 'ያልተከፈለ አዳሪ' : o.paymentMethod}
                             </span>
                           </td>
                           <td className="p-2.5 text-right font-bold text-gray-900">{o.total.toFixed(0)} ETB</td>
@@ -660,8 +660,8 @@ export function ShiftReconciliationModal({
           {step === 4 && (
             <div>
               <p className="eyebrow text-xs font-bold text-gray-400">ደረጃ 4 ከ 5</p>
-              <h3 className="text-xl font-bold text-gray-900">የቆየ የብርጭቆ ብድር ስብስብ (Pending Credit Collection)</h3>
-              <p className="muted text-xs">ዛሬ ስንት ብርጭቆ ዋጋ ከተበዳሪዎች ተሰብስቧል? ማንኛውም ቁጥር ያስገቡ — ቀሪው ለቀጣይ ሺፍት ይቀራል።</p>
+              <h3 className="text-xl font-bold text-gray-900">የቆየ የብርጭቆ አዳሪ ስብስብ (Pending Adari Collection)</h3>
+              <p className="muted text-xs">ዛሬ ስንት ብርጭቆ ዋጋ ከአዳሪ ደንበኞች ተሰብስቧል? ማንኛውም ቁጥር ያስገቡ — ቀሪው ለቀጣይ ሺፍት ይቀራል።</p>
 
               {/* Total Pending Pool */}
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl mb-5">
@@ -672,7 +672,7 @@ export function ShiftReconciliationModal({
                     <span className="text-xs text-gray-500 ml-2">= {totalPendingETB.toFixed(0)} ETB</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">ቀሪ ብድር</span>
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">ቀሪ አዳሪ</span>
                     <strong className="text-xl font-extrabold text-gray-700">{remainingPendingCups} ብርጭቆ</strong>
                     <span className="text-xs text-gray-400 ml-1">= {(remainingPendingCups * PRICE_PER_CUP).toFixed(0)} ETB</span>
                   </div>
@@ -736,7 +736,7 @@ export function ShiftReconciliationModal({
               {/* Collected Cash Callout */}
               <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">ዛሬ የተሰበሰበ ብድር</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">ዛሬ የተሰበሰበ አዳሪ</span>
                   <span className="text-xs text-gray-600">{totalRecoveredCups} ብርጭቆ × 170 ETB</span>
                 </div>
                 <strong className="text-xl font-extrabold text-gray-900">+{totalRecoveredDebts.toFixed(0)} ETB</strong>
@@ -802,7 +802,7 @@ export function ShiftReconciliationModal({
                       +
                     </span>
                     <strong className="text-xs sm:text-sm font-black text-gray-900">
-                      + የተሰበሰበ የቆየ ብድር (ደረጃ 4):
+                      + የተሰበሰበ የቆየ አዳሪ (ደረጃ 4):
                     </strong>
                   </div>
                   <strong className="text-xs sm:text-sm font-black text-blue-700 font-mono bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
@@ -836,7 +836,7 @@ export function ShiftReconciliationModal({
                       ለባለቤቱ የሚረከበው የተጣራ ገንዘብ
                     </strong>
                     <strong className="text-xs font-bold text-emerald-200 block mt-1 leading-relaxed">
-                      ተጣራ ገንዘብ = የጥሬ ገንዘብ ሽያጭ + የተሰበሰበ ብድር − ወጪዎች
+                      ተጣራ ገንዘብ = የጥሬ ገንዘብ ሽያጭ + የተሰበሰበ አዳሪ − ወጪዎች
                     </strong>
                   </div>
                   <div className="text-left sm:text-right bg-black/30 px-5 py-3 rounded-xl border border-white/15 shrink-0 shadow-inner">

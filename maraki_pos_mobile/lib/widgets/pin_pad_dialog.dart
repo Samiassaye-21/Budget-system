@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../theme/app_theme.dart';
 
 class PinPadDialog extends StatefulWidget {
   final String title;
   final String subtitle;
-  final Function(String pin) onConfirm;
+  final ValueChanged<String> onConfirm;
+  final String requiredPin;
 
   const PinPadDialog({
     super.key,
-    this.title = 'የደህንነት PIN ማረጋገጫ (Security PIN)',
-    this.subtitle = 'እባክዎ 4-ዲጂት የይለፍ ቃል ያስገቡ (ነባሪ PIN: 1234)',
+    required this.title,
+    required this.subtitle,
     required this.onConfirm,
+    this.requiredPin = '9999',
   });
 
   @override
@@ -19,16 +23,31 @@ class PinPadDialog extends StatefulWidget {
 class _PinPadDialogState extends State<PinPadDialog> {
   String _pin = '';
   String? _errorMessage;
+  final FocusNode _focusNode = FocusNode();
 
-  void _handleNumberPress(String num) {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleNumberPress(String digit) {
     if (_pin.length < 4) {
       setState(() {
-        _pin += num;
+        _pin += digit;
         _errorMessage = null;
       });
 
       if (_pin.length == 4) {
-        _verifyPin();
+        _validatePin();
       }
     }
   }
@@ -42,13 +61,13 @@ class _PinPadDialogState extends State<PinPadDialog> {
     }
   }
 
-  void _verifyPin() {
-    if (_pin == '1234') {
+  void _validatePin() {
+    if (_pin == widget.requiredPin || widget.requiredPin.isEmpty) {
       Navigator.of(context).pop();
       widget.onConfirm(_pin);
     } else {
       setState(() {
-        _errorMessage = 'የተሳሳተ PIN! እባክዎ እንደገና ይሞክሩ (ነባሪ: 1234)';
+        _errorMessage = 'የተሳሳተ PIN ነው! እባክዎ እንደገና ይሞክሩ።';
         _pin = '';
       });
     }
@@ -56,7 +75,26 @@ class _PinPadDialogState extends State<PinPadDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
+    return KeyboardListener(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: (event) {
+        if (event is KeyDownEvent) {
+          final key = event.logicalKey;
+          if (key == LogicalKeyboardKey.backspace) {
+            _handleBackspace();
+          } else if (key == LogicalKeyboardKey.escape) {
+            Navigator.of(context).pop();
+          } else {
+            final char = event.character;
+            if (char != null && RegExp(r'^[0-9]$').hasMatch(char)) {
+              _handleNumberPress(char);
+            }
+          }
+        }
+      },
+      child: Dialog(
+      backgroundColor: AppColors.surface,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
@@ -69,23 +107,23 @@ class _PinPadDialogState extends State<PinPadDialog> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: Colors.amber.shade50,
+                color: AppColors.primarySoft,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.amber.shade300, width: 2),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 2),
               ),
-              child: const Icon(Icons.lock_rounded, color: Color(0xFFC05621), size: 28),
+              child: const Icon(Icons.lock_rounded, color: AppColors.primary, size: 28),
             ),
             const SizedBox(height: 16),
             Text(
               widget.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.obsidian),
             ),
             const SizedBox(height: 6),
             Text(
               widget.subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 20),
 
@@ -100,9 +138,9 @@ class _PinPadDialogState extends State<PinPadDialog> {
                   height: 16,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isFilled ? const Color(0xFFE53E3E) : Colors.grey.shade200,
+                    color: isFilled ? AppColors.primary : AppColors.border,
                     border: Border.all(
-                      color: isFilled ? const Color(0xFFE53E3E) : Colors.grey.shade400,
+                      color: isFilled ? AppColors.primary : AppColors.slate,
                       width: 2,
                     ),
                   ),
@@ -154,8 +192,9 @@ class _PinPadDialogState extends State<PinPadDialog> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildKeypadRow(List<String> numbers) {
     return Row(

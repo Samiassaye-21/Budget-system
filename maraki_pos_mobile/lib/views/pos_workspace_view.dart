@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/pos_provider.dart';
+import '../services/supabase_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/cloud_sync_dialog.dart';
 import 'pay_later_modal.dart';
 import 'shift_reconciliation_view.dart';
 
@@ -77,38 +80,112 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Real Brand Logo
                 Container(
-                  padding: const EdgeInsets.all(4),
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
+                    color: Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.amber.shade300),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.amber.shade300, width: 1.5),
                   ),
-                  child: const Text('🍊', style: TextStyle(fontSize: 14)),
+                  child: ClipOval(
+                    child: Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.point_of_sale, size: 16, color: AppColors.primary),
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 const Text(
                   'ማራኪ POS',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.obsidian),
                 ),
                 const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: pos.shiftSession?.shiftType == ShiftType.day ? Colors.amber.shade50 : Colors.purple.shade50,
+                    color: AppColors.primarySoft,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: pos.shiftSession?.shiftType == ShiftType.day ? Colors.amber.shade300 : Colors.purple.shade300,
+                      color: AppColors.primary.withValues(alpha: 0.3),
                     ),
                   ),
-                  child: Text(
-                    pos.shiftSession?.shiftType == ShiftType.day ? '☀ ቀን' : '☾ ማታ',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: pos.shiftSession?.shiftType == ShiftType.day ? const Color(0xFFC05621) : const Color(0xFF6B46C1),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        pos.shiftSession?.shiftType == ShiftType.day ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                        size: 11,
+                        color: AppColors.primaryDark,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        pos.shiftSession?.shiftType == ShiftType.day ? 'ቀን' : 'ማታ',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                const SizedBox(width: 6),
+                // Supabase Real-Time Live Status Pill
+                ValueListenableBuilder<SupabaseSyncStatus>(
+                  valueListenable: SupabaseService.instance.statusNotifier,
+                  builder: (_, status, __) {
+                    final isOnline = status == SupabaseSyncStatus.online;
+                    final isSyncing = status == SupabaseSyncStatus.syncing;
+                    return InkWell(
+                      onTap: () => CloudSyncDialog.show(context),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isOnline ? Colors.green.shade50 : Colors.amber.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isOnline ? Colors.green.shade300 : Colors.amber.shade300,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: isOnline ? Colors.green.shade700 : Colors.amber.shade800,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isSyncing ? 'Syncing...' : (isOnline ? 'Online' : 'Offline'),
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                color: isOnline ? Colors.green.shade800 : Colors.amber.shade900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -128,7 +205,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                     },
                     icon: Badge(
                       label: Text('${pos.pendingPayLaterOrders.length}', style: const TextStyle(fontSize: 9)),
-                      child: const Icon(Icons.schedule, size: 20, color: Color(0xFFC05621)),
+                      child: const Icon(Icons.schedule, size: 20, color: AppColors.primary),
                     ),
                     tooltip: 'Pay Later (${pos.pendingPayLaterOrders.length})',
                   ),
@@ -146,7 +223,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE53E3E),
+                          backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       )
@@ -154,7 +231,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                         onPressed: () => _handleOpenReconciliation(context, pos),
                         icon: const Icon(Icons.lock_clock, size: 18, color: Colors.white),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFE53E3E),
+                          backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         tooltip: 'የሺፍት ማጠቃለያ',
@@ -266,14 +343,14 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${pos.cartJuiceCupsCount} እቃዎች', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    Text('${pos.cartTotal.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E))),
+                    Text('${pos.cartJuiceCupsCount} እቃዎች', style: const TextStyle(fontSize: 12, color: AppColors.slate)),
+                    Text('${pos.cartTotal.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primary)),
                   ],
                 ),
                 ElevatedButton(
                   onPressed: () => _showMobileCartSheet(context, pos),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53E3E),
+                    backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -289,7 +366,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
   Widget _buildCategoryTabsAndSearch(POSProvider pos) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Colors.white,
+      color: AppColors.surface,
       child: Column(
         children: [
           Row(
@@ -305,11 +382,11 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
             onChanged: (val) => pos.setSearchQuery(val),
             decoration: InputDecoration(
               hintText: 'ምግብ እና ጁስ ይፈልጉ (Search menu)...',
-              prefixIcon: const Icon(Icons.search, size: 18, color: Colors.grey),
+              prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.slate),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: AppColors.background,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
             ),
           ),
         ],
@@ -326,7 +403,8 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFE53E3E) : Colors.grey.shade100,
+            color: isSelected ? AppColors.primary : AppColors.background,
+            border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
@@ -337,10 +415,587 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Colors.grey.shade700,
+                color: isSelected ? Colors.white : AppColors.textPrimary,
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIncomingKitchenTicketsBanner(BuildContext context, POSProvider pos) {
+    final tickets = pos.pendingShiftKitchenTickets;
+    final totalPendingItems = tickets.fold(0, (sum, t) => sum + t.totalQuantity);
+
+    if (tickets.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.amber.shade400,
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.restaurant_menu_rounded,
+              color: Colors.amber.shade900,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '🍳 ከኩሽና የተላከ አዲስ ትዕዛዝ ($totalPendingItems ምግቦች)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.amber.shade900,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${tickets.length} አዳዲስ የኩሽና ቲኬቶች አሉ። ወደ ሽያጭ ካስገቡ በኋላ በራሳቸው ይጠፋሉ!',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.shade900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: () => _showIncomingKitchenTicketsModal(context, pos),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 1,
+            ),
+            icon: const Icon(Icons.receipt_long, size: 14, color: Colors.white),
+            label: const Text(
+              'ተቀበልና መዝግብ',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showIncomingKitchenTicketsModal(BuildContext context, POSProvider pos) {
+    final tickets = pos.pendingShiftKitchenTickets;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.restaurant_menu, color: AppColors.primary, size: 22),
+                      SizedBox(width: 8),
+                      Text(
+                        'ከኩሽና የተላኩ ትዕዛዞች (Incoming Orders)',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.obsidian),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      if (tickets.length > 1)
+                        ElevatedButton(
+                          onPressed: () {
+                            for (final t in List.from(tickets)) {
+                              pos.importKitchenTicketToOrder(t);
+                            }
+                            Navigator.of(ctx).pop();
+                            _triggerSuccessToast();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('ሁሉም የኩሽና ቲኬቶች ወደ ሽያጭ ገብተዋል!'),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade700,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('ሁሉንም አስገባ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ),
+                      IconButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Tickets List
+            Expanded(
+              child: tickets.isEmpty
+                  ? const Center(child: Text('ምንም አዲስ ያልተመዘገበ የኩሽና ቲኬት የለም', style: TextStyle(color: Colors.grey)))
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: tickets.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final t = tickets[index];
+                        final timeStr = '${t.createdAt.hour.toString().padLeft(2, '0')}:${t.createdAt.minute.toString().padLeft(2, '0')}';
+                        return Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primarySoft,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          '#${t.id.replaceAll("k-ticket-", "").toUpperCase()}',
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primaryDark),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: t.orderType.contains('የታሸገ') ? const Color(0xFFEFF6FF) : const Color(0xFFF0FDF4),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: t.orderType.contains('የታሸገ') ? const Color(0xFFBFDBFE) : const Color(0xFFBBF7D0),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              t.orderType.contains('የታሸገ') ? Icons.shopping_bag_outlined : Icons.table_restaurant_rounded,
+                                              size: 11,
+                                              color: t.orderType.contains('የታሸገ') ? const Color(0xFF1D4ED8) : const Color(0xFF15803D),
+                                            ),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              t.orderType,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w800,
+                                                color: t.orderType.contains('የታሸገ') ? const Color(0xFF1D4ED8) : const Color(0xFF15803D),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    'ሰዓት፡ $timeStr',
+                                    style: const TextStyle(fontSize: 11, color: AppColors.slate, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              ...t.items.map(
+                                (item) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 2),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '• ${item.quantity}x ${item.name}',
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.obsidian),
+                                      ),
+                                      Text(
+                                        '${(item.price * item.quantity).toStringAsFixed(0)} ETB',
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        pos.addItemsToCart(t.items);
+                                        pos.markKitchenTicketAccepted(t.id);
+                                        Navigator.of(ctx).pop();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('የኩሽና እቃዎች ወደ ካርት ገብተዋል!'),
+                                            backgroundColor: AppColors.primary,
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(color: AppColors.primary),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                      icon: const Icon(Icons.add_shopping_cart, size: 14, color: AppColors.primary),
+                                      label: const Text('ወደ ካርት ጨምር', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        pos.importKitchenTicketToOrder(t);
+                                        Navigator.of(ctx).pop();
+                                        _triggerSuccessToast();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('የኩሽና ቲኬት #${t.id.replaceAll("k-ticket-", "").toUpperCase()} ወደ ሽያጭ ተመዝግቧል!'),
+                                            backgroundColor: Colors.green.shade700,
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                      icon: const Icon(Icons.check, size: 14, color: Colors.white),
+                                      label: const Text('ወደ ሽያጭ መዝግብ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showProductItemDialog(BuildContext context, Product product, POSProvider pos) {
+    int qty = 1;
+    String orderType = 'ቤት (Dine-in)';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      children: [
+                        _buildProductImage(
+                          product.imageUrl,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product.amharicName.isNotEmpty ? product.amharicName : product.name,
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.obsidian),
+                              ),
+                              Text(
+                                product.name,
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${product.price.toStringAsFixed(0)} ETB',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.primary),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close, color: AppColors.slate),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    const Divider(height: 1),
+                    const SizedBox(height: 14),
+
+                    // STEP 1: Quantity
+                    const Row(
+                      children: [
+                        Icon(Icons.format_list_numbered, size: 16, color: AppColors.primary),
+                        SizedBox(width: 6),
+                        Text(
+                          'ደረጃ 1፡ ብዛት ይምረጡ (Quantity)',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.obsidian),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            if (qty > 1) {
+                              setDialogState(() => qty--);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: const Icon(Icons.remove, size: 18, color: AppColors.obsidian),
+                          ),
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              '$qty',
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.obsidian),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => setDialogState(() => qty++),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.add, size: 18, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [1, 2, 3, 4, 5, 10].map((n) {
+                        final isSel = qty == n;
+                        return InkWell(
+                          onTap: () => setDialogState(() => qty = n),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: isSel ? AppColors.primary : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: isSel ? AppColors.primary : AppColors.border),
+                            ),
+                            child: Text(
+                              '+$n',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                color: isSel ? Colors.white : AppColors.obsidian,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // STEP 2: Order Type (ቤት vs የታሸገ / Takeaway)
+                    const Row(
+                      children: [
+                        Icon(Icons.restaurant_rounded, size: 16, color: AppColors.primary),
+                        SizedBox(width: 6),
+                        Text(
+                          'ደረጃ 2፡ የማዘዣ አይነት (Order Type)',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.obsidian),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildOrderTypePill(
+                            'ቤት (በቦታው)',
+                            'ቤት (Dine-in)',
+                            Icons.table_restaurant_rounded,
+                            orderType == 'ቤት (Dine-in)',
+                            () => setDialogState(() => orderType = 'ቤት (Dine-in)'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildOrderTypePill(
+                            'የታሸገ (Takeaway)',
+                            'የታሸገ (Takeaway)',
+                            Icons.shopping_bag_outlined,
+                            orderType == 'የታሸገ (Takeaway)',
+                            () => setDialogState(() => orderType = 'የታሸገ (Takeaway)'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Total and Add Button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('ጠቅላላ ዋጋ፡', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.slate)),
+                        Text(
+                          '${(product.price * qty).toStringAsFixed(0)} ETB',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          pos.addToCart(product, quantity: qty, notes: orderType);
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 2,
+                        ),
+                        icon: const Icon(Icons.shopping_cart, size: 16, color: Colors.white),
+                        label: const Text(
+                          'ወደ ካርት ጨምር (Add to Cart)',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrderTypePill(String shortTitle, String fullTitle, IconData icon, bool isSelected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primarySoft : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? AppColors.primaryDark : AppColors.slate,
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                shortTitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: isSelected ? AppColors.primaryDark : AppColors.obsidian,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -355,135 +1010,180 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
       return matchesCat && matchesSearch;
     }).toList();
 
-    if (filtered.isEmpty) {
-      return const Center(child: Text('ምንም የተገኘ እቃ የለም', style: TextStyle(color: Colors.grey)));
-    }
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final double childAspect = screenWidth < 380 ? 0.68 : (screenWidth < 600 ? 0.72 : 0.82);
-    final double maxExtent = screenWidth < 400 ? 180 : 220;
-
-    return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: maxExtent,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: childAspect,
-      ),
-      itemCount: filtered.length,
-      itemBuilder: (context, index) {
-        final product = filtered[index];
-        return _buildProductCard(product, pos);
-      },
+    return Column(
+      children: [
+        _buildIncomingKitchenTicketsBanner(context, pos),
+        Expanded(
+          child: filtered.isEmpty
+              ? const Center(child: Text('ምንም የተገኘ እቃ የለም', style: TextStyle(color: Colors.grey)))
+              : GridView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: MediaQuery.of(context).size.width < 400 ? 180 : 220,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: MediaQuery.of(context).size.width < 380 ? 0.68 : (MediaQuery.of(context).size.width < 600 ? 0.72 : 0.82),
+                  ),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final product = filtered[index];
+                    return _buildProductCard(product, pos);
+                  },
+                ),
+        ),
+      ],
     );
   }
 
   Widget _buildProductCard(Product product, POSProvider pos) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image / Thumbnail with Availability Overlay
-          Expanded(
-            child: Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    color: Colors.grey.shade100,
-                    image: DecorationImage(
-                      image: NetworkImage(product.imageUrl),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                if (!product.isAvailable)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'አልቋል (Sold Out)',
-                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                // Quick Stock Toggle in top right
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: InkWell(
-                    onTap: () => pos.toggleProductAvailability(product.id),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: product.isAvailable ? Colors.green.shade600 : Colors.red.shade600,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        product.isAvailable ? 'አለ' : 'የለም',
-                        style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    final inCartQty = pos.currentCart.where((i) => i.productId == product.id).fold(0, (sum, i) => sum + i.quantity);
+    final isInCart = inCartQty > 0;
+
+    return InkWell(
+      onTap: product.isAvailable ? () => _showProductItemDialog(context, product, pos) : null,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isInCart ? AppColors.primary : Colors.grey.shade200,
+            width: isInCart ? 2 : 1,
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  product.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
-                ),
-                Text(
-                  product.amharicName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        '${product.price.toStringAsFixed(0)} ETB',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E)),
+          boxShadow: isInCart
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image / Thumbnail with Availability Overlay & In-Cart Badge
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: _buildProductImage(
+                      product.imageUrl,
+                      fit: BoxFit.cover,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                    ),
+                  ),
+                  if (!product.isAvailable)
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'አልቋል (Sold Out)',
+                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    InkWell(
-                      onTap: product.isAvailable ? () => pos.addToCart(product) : null,
+                  // In-Cart Badge
+                  if (isInCart)
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.shopping_cart, size: 10, color: Colors.white),
+                            const SizedBox(width: 3),
+                            Text(
+                              '$inCartQty በካርት',
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // Quick Stock Toggle in top right
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: InkWell(
+                      onTap: () => pos.toggleProductAvailability(product.id),
                       borderRadius: BorderRadius.circular(6),
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
-                          color: product.isAvailable ? const Color(0xFFE53E3E) : Colors.grey.shade300,
+                          color: product.isAvailable ? Colors.green.shade600 : Colors.red.shade600,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Icon(Icons.add, size: 14, color: Colors.white),
+                        child: Text(
+                          product.isAvailable ? 'አለ' : 'የለም',
+                          style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    product.amharicName.isNotEmpty ? product.amharicName : product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
+                  ),
+                  Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '${product.price.toStringAsFixed(0)} ETB',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.primary),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: product.isAvailable ? () => _showProductItemDialog(context, product, pos) : null,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isInCart ? AppColors.primary : AppColors.obsidian,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            isInCart ? '$inCartQty ጨምር' : 'ምረጥ',
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -493,10 +1193,27 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
     final success = pos.fireOrder();
     if (success) {
       _notesController.clear();
-      if (isSheet && Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
+      final messenger = ScaffoldMessenger.of(context);
+      final nav = Navigator.of(context);
+
+      if (isSheet && nav.canPop()) {
+        nav.pop();
       }
       _triggerSuccessToast();
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(child: Text('ትዕዛዝ በተሳካ ሁኔታ ተላልፏል! (Order Sent Successfully)')),
+            ],
+          ),
+          backgroundColor: Colors.green.shade700,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -542,7 +1259,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                     ElevatedButton.icon(
                       onPressed: () => _handleFireOrder(context, pos, isSheet: isSheet),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE53E3E),
+                        backgroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
@@ -566,10 +1283,10 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.shopping_bag_outlined, size: 48, color: Colors.grey.shade300),
+                      Icon(Icons.shopping_bag_outlined, size: 48, color: AppColors.border),
                       const SizedBox(height: 8),
-                      Text('ምንም የተመረጠ ማዘዣ የለም', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
-                      const Text('ከካታሎጉ ላይ የመረጡትን ይጫኑ', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                      const Text('ምንም የተመረጠ ማዘዣ የለም', style: TextStyle(color: AppColors.slate, fontSize: 13)),
+                      const Text('ከካታሎጉ ላይ የመረጡትን ይጫኑ', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
                     ],
                   ),
                 )
@@ -586,8 +1303,8 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(item.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                              Text('${(item.price * item.quantity).toStringAsFixed(0)} ETB', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                              Text(item.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.obsidian)),
+                              Text('${(item.price * item.quantity).toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 11, color: AppColors.slate)),
                             ],
                           ),
                         ),
@@ -596,13 +1313,13 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                             IconButton(
                               onPressed: () => pos.updateCartQuantity(item.productId, -1),
                               icon: const Icon(Icons.remove_circle_outline, size: 20),
-                              color: Colors.grey,
+                              color: AppColors.slate,
                             ),
-                            Text('${item.quantity}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
+                            Text('${item.quantity}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.obsidian)),
                             IconButton(
                               onPressed: () => pos.updateCartQuantity(item.productId, 1),
                               icon: const Icon(Icons.add_circle_outline, size: 20),
-                              color: const Color(0xFFE53E3E),
+                              color: AppColors.primary,
                             ),
                           ],
                         ),
@@ -618,9 +1335,9 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
           bottom: true,
           child: Container(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              border: Border(top: BorderSide(color: Colors.grey.shade200)),
+            decoration: const BoxDecoration(
+              color: AppColors.background,
+              border: Border(top: BorderSide(color: AppColors.border)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,37 +1347,27 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                 TextField(
                   controller: _notesController,
                   onChanged: (val) => pos.setOrderNotes(val),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'ልዩ ማስታወሻ ይጻፉ (Order notes)...',
                     filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
+                    fillColor: AppColors.surface,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: AppColors.border)),
                   ),
                 ),
                 const SizedBox(height: 8),
 
-                const Text('የክፍያ መንገድ (Payment Method)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text('የክፍያ መንገድ (Payment Method)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.slate)),
                 const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    _buildPaymentChip('ጥሬ ገንዘብ', 'Cash', pos),
-                    _buildPaymentChip('ባንክ/ቴሌብር', 'Transfer', pos),
-                    _buildPaymentChip('በኋላ (Pay later)', 'Pay later', pos),
-                    _buildPaymentChip('በብድር', 'Credit', pos),
-                    _buildPaymentChip('ዴሊቨሪ', 'Delivery', pos),
-                  ],
-                ),
+                _buildFastPaymentGrid(pos),
                 const SizedBox(height: 10),
 
                 // Total & Fire Button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('ጠቅላላ ክፍያ (Net Total):', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                    Text('${pos.cartTotal.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E))),
+                    const Text('ጠቅላላ ክፍያ (Net Total):', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.obsidian)),
+                    Text('${pos.cartTotal.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primary)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -673,8 +1380,8 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                         ? null
                         : () => _handleFireOrder(context, pos, isSheet: isSheet),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE53E3E),
-                      disabledBackgroundColor: Colors.grey.shade300,
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor: AppColors.border,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: const Icon(Icons.local_fire_department, color: Colors.white),
@@ -689,23 +1396,81 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
     );
   }
 
-  Widget _buildPaymentChip(String label, String method, POSProvider pos) {
-    final isSelected = pos.selectedPaymentMethod == method;
-    return ChoiceChip(
-      label: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black87)),
-      selected: isSelected,
-      selectedColor: const Color(0xFFE53E3E),
-      backgroundColor: Colors.white,
-      onSelected: (_) => pos.setPaymentMethod(method),
+  Widget _buildFastPaymentGrid(POSProvider pos) {
+    final methods = [
+      {'label': 'ጥሬ ገንዘብ', 'method': 'Cash', 'icon': Icons.payments_outlined},
+      {'label': 'ቴሌብር', 'method': 'Telebirr', 'icon': Icons.phone_android_rounded},
+      {'label': 'CBE/ባንክ', 'method': 'Transfer', 'icon': Icons.account_balance_outlined},
+      {'label': 'በኋላ (Later)', 'method': 'Pay later', 'icon': Icons.hourglass_top_rounded},
+      {'label': 'አዳሪ (Adari)', 'method': 'Credit', 'icon': Icons.credit_card_rounded},
+      {'label': 'ዴሊቨሪ', 'method': 'Delivery', 'icon': Icons.delivery_dining_rounded},
+    ];
+
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 3,
+      crossAxisSpacing: 6,
+      mainAxisSpacing: 6,
+      childAspectRatio: 2.4,
+      children: methods.map((m) {
+        final label = m['label'] as String;
+        final method = m['method'] as String;
+        final icon = m['icon'] as IconData;
+        final isSelected = pos.selectedPaymentMethod == method;
+
+        return Material(
+          color: isSelected ? AppColors.primary : AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: () => pos.setPaymentMethod(method),
+            borderRadius: BorderRadius.circular(10),
+            splashColor: AppColors.primary.withValues(alpha: 0.2),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.border,
+                  width: isSelected ? 1.5 : 1,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 13,
+                    color: isSelected ? Colors.white : AppColors.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w900,
+                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
   Widget _buildBottomStatusBar(POSProvider pos, int cupsUsed, int cupsRemaining, double revenue, BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: SafeArea(
         top: false,
@@ -716,15 +1481,31 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8)),
-                child: Text('$cupsUsed ጥቅም ላይ ውሏል / $cupsRemaining ይቀራል', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
+                decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_today, size: 12, color: AppColors.obsidian),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${DateHelper.todayFormatted()} • ⏰ ${pos.shiftSession?.shiftType == ShiftType.day ? DateHelper.dayShiftHours : DateHelper.nightShiftHours}',
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.obsidian),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(8)),
+                child: Text('$cupsUsed ጥቅም ላይ ውሏል / $cupsRemaining ይቀራል', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryDark)),
               ),
               const SizedBox(width: 8),
               if (pos.pendingPayLaterOrders.isNotEmpty) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: Colors.orange.shade100, borderRadius: BorderRadius.circular(8)),
-                  child: Text('${pos.pendingPayLaterOrders.length} ያልተከፈሉ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange.shade900)),
+                  decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
+                  child: Text('${pos.pendingPayLaterOrders.length} ያልተከፈሉ', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryDark)),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -732,14 +1513,14 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                 onTap: () => _handleOpenReconciliation(context, pos),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200)),
+                  decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.border)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('የዛሬ ሽያጭ: ', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      Text('${revenue.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E))),
+                      const Icon(Icons.receipt_long, size: 14, color: AppColors.obsidian),
                       const SizedBox(width: 4),
-                      const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.grey),
+                      const Text('የሺፍት ገቢ፡ ', style: TextStyle(fontSize: 11, color: AppColors.slate)),
+                      Text('${revenue.toStringAsFixed(0)} ETB', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.primary)),
                     ],
                   ),
                 ),
@@ -757,10 +1538,97 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
       isScrollControlled: true,
       useSafeArea: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.90,
-        child: _buildCartPanel(context, pos, isSheet: true),
+      builder: (ctx) => Consumer<POSProvider>(
+        builder: (modalCtx, livePos, _) => SizedBox(
+          height: MediaQuery.of(modalCtx).size.height * 0.90,
+          child: _buildCartPanel(modalCtx, livePos, isSheet: true),
+        ),
       ),
     );
+  }
+
+  Widget _buildProductImage(
+    String imageUrl, {
+    BoxFit fit = BoxFit.cover,
+    double? width,
+    double? height,
+    BorderRadius? borderRadius,
+  }) {
+    Widget img;
+    if (imageUrl.startsWith('assets/')) {
+      img = Image.asset(
+        imageUrl,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) => Container(
+          width: width,
+          height: height,
+          color: AppColors.primarySoft,
+          child: const Icon(Icons.restaurant, color: AppColors.primary),
+        ),
+      );
+    } else if (imageUrl.startsWith('http')) {
+      final uri = Uri.tryParse(imageUrl);
+      final filename = uri?.pathSegments.isNotEmpty == true ? uri!.pathSegments.last : '';
+      if (filename.isNotEmpty) {
+        img = Image.asset(
+          'assets/products/$filename',
+          width: width,
+          height: height,
+          fit: fit,
+          errorBuilder: (_, __, ___) => Image.network(
+            imageUrl,
+            width: width,
+            height: height,
+            fit: fit,
+            errorBuilder: (_, __, ___) => Container(
+              width: width,
+              height: height,
+              color: AppColors.primarySoft,
+              child: const Icon(Icons.restaurant, color: AppColors.primary),
+            ),
+          ),
+        );
+      } else {
+        img = Image.network(
+          imageUrl,
+          width: width,
+          height: height,
+          fit: fit,
+          errorBuilder: (_, __, ___) => Container(
+            width: width,
+            height: height,
+            color: AppColors.primarySoft,
+            child: const Icon(Icons.restaurant, color: AppColors.primary),
+          ),
+        );
+      }
+    } else if (imageUrl.startsWith('/products/')) {
+      img = Image.asset(
+        'assets$imageUrl',
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) => Container(
+          width: width,
+          height: height,
+          color: AppColors.primarySoft,
+          child: const Icon(Icons.restaurant, color: AppColors.primary),
+        ),
+      );
+    } else {
+      img = Image.asset(
+        'assets/logo.png',
+        width: width,
+        height: height,
+        fit: BoxFit.contain,
+      );
+    }
+
+    if (borderRadius != null) {
+      return ClipRRect(borderRadius: borderRadius, child: img);
+    }
+    return img;
   }
 }

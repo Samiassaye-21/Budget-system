@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.marakipos.maraki_pos_mobile"
     compileSdk = 36
-    buildToolsVersion = "36.0.0"
+    ndkPath = "/tmp/dummy_ndk"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -36,7 +36,7 @@ android {
 
     packaging {
         jniLibs {
-            keepDebugSymbols.add("**/*.so")
+            keepDebugSymbols.add("**")
         }
     }
 
@@ -58,4 +58,13 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+tasks.matching { 
+    it.name.contains("NativeSymbolTables") || 
+    it.name.startsWith("externalNativeBuild") || 
+    it.name.contains("CMake") ||
+    it.name.contains("generateJsonModel")
+}.configureEach {
+    enabled = false
 }

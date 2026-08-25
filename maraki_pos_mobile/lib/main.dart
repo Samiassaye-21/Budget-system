@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'models/models.dart';
 import 'providers/pos_provider.dart';
+import 'theme/app_theme.dart';
 import 'views/shift_gate_view.dart';
 import 'views/cup_setup_view.dart';
 import 'views/pos_workspace_view.dart';
@@ -28,15 +29,7 @@ class MarakiPOSApp extends StatelessWidget {
     return MaterialApp(
       title: 'Maraki POS',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFE53E3E),
-          primary: const Color(0xFFE53E3E),
-          secondary: const Color(0xFFC05621),
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF7FAFC),
-      ),
+      theme: AppTheme.theme,
       home: const MainRouter(),
     );
   }

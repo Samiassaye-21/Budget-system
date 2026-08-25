@@ -35,9 +35,9 @@ export const INITIAL_PRODUCTS: Product[] = [
 
 // CUP-BASED CUSTOMER CREDIT DEBTS (Price per cup: 170 ETB)
 export const INITIAL_DEBTS: CustomerDebt[] = [
-  { id: 'deb-1', customerName: 'አበበ ቢቂላ (Abebe Bikila)', note: 'የትላንትና የቢሮ ጁስ ብድር', cupCount: 5, pricePerCup: 170, amount: 850, isRecovered: false, shiftIdCreated: 'prev-shift-1', createdAt: new Date(Date.now() - 86400000).toISOString() },
-  { id: 'deb-2', customerName: 'ትዕግስት ኃይሌ (Tigist Haile)', note: 'የምሳ ጁስ ማዘዣ ብድር', cupCount: 3, pricePerCup: 170, amount: 510, isRecovered: false, shiftIdCreated: 'prev-shift-2', createdAt: new Date(Date.now() - 172800000).toISOString() },
-  { id: 'deb-3', customerName: 'ከበደ ታሰሰ (Kebede Tassew)', note: 'የካፌ ዴሊቨሪ ጁስ ብድር', cupCount: 8, pricePerCup: 170, amount: 1360, isRecovered: false, shiftIdCreated: 'prev-shift-3', createdAt: new Date(Date.now() - 259200000).toISOString() },
+  { id: 'deb-1', customerName: 'አበበ ቢቂላ (Abebe Bikila)', note: 'የትላንትና የቢሮ ጁስ አዳሪ (Adari)', cupCount: 5, pricePerCup: 170, amount: 850, isRecovered: false, shiftIdCreated: 'prev-shift-1', createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: 'deb-2', customerName: 'ትዕግስት ኃይሌ (Tigist Haile)', note: 'የምሳ ጁስ ማዘዣ አዳሪ (Adari)', cupCount: 3, pricePerCup: 170, amount: 510, isRecovered: false, shiftIdCreated: 'prev-shift-2', createdAt: new Date(Date.now() - 172800000).toISOString() },
+  { id: 'deb-3', customerName: 'ከበደ ታሰሰ (Kebede Tassew)', note: 'የካፌ ዴሊቨሪ ጁስ አዳሪ (Adari)', cupCount: 8, pricePerCup: 170, amount: 1360, isRecovered: false, shiftIdCreated: 'prev-shift-3', createdAt: new Date(Date.now() - 259200000).toISOString() },
 ];
 
 class DataService {

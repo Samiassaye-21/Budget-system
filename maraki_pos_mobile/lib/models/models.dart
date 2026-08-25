@@ -315,26 +315,52 @@ class ShiftExpense {
 
 class KitchenTicket {
   final String id;
-  final String route; // 'Day shift' | 'Night shift' | 'Bue delivery'
+  final String route; // 'Day shift' | 'Night shift'
+  final String orderType; // 'ቤት (Dine-in)' | 'የታሸገ (Takeaway)'
   final List<OrderItem> items;
   final int totalQuantity;
   final DateTime createdAt;
+  final String status; // 'pending' | 'accepted' | 'closed'
 
   KitchenTicket({
     required this.id,
     required this.route,
+    this.orderType = 'ቤት (Dine-in)',
     required this.items,
     required this.totalQuantity,
     required this.createdAt,
+    this.status = 'pending',
   });
+
+  KitchenTicket copyWith({
+    String? id,
+    String? route,
+    String? orderType,
+    List<OrderItem>? items,
+    int? totalQuantity,
+    DateTime? createdAt,
+    String? status,
+  }) {
+    return KitchenTicket(
+      id: id ?? this.id,
+      route: route ?? this.route,
+      orderType: orderType ?? this.orderType,
+      items: items ?? this.items,
+      totalQuantity: totalQuantity ?? this.totalQuantity,
+      createdAt: createdAt ?? this.createdAt,
+      status: status ?? this.status,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'route': route,
+      'orderType': orderType,
       'items': items.map((x) => x.toMap()).toList(),
       'totalQuantity': totalQuantity,
       'createdAt': createdAt.toIso8601String(),
+      'status': status,
     };
   }
 
@@ -342,9 +368,11 @@ class KitchenTicket {
     return KitchenTicket(
       id: map['id'] ?? '',
       route: map['route'] ?? 'Day shift',
+      orderType: map['orderType'] ?? 'ቤት (Dine-in)',
       items: List<OrderItem>.from((map['items'] as List? ?? []).map((x) => OrderItem.fromMap(x))),
       totalQuantity: map['totalQuantity']?.toInt() ?? 0,
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
+      status: map['status'] ?? 'pending',
     );
   }
 }

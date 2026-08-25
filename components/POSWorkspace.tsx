@@ -432,7 +432,7 @@ export function POSWorkspace({
               ['Cash', WalletCards, 'ጥሬ ገንዘብ'],
               ['Transfer', Smartphone, 'ባንክ ማስተላለፍ'],
               ['Pay later', ReceiptText, 'በኋላ (Pay later)'],
-              ['Credit', CreditCard, 'በብድር'],
+              ['Credit', CreditCard, 'አዳሪ (Adari)'],
               ['Delivery', Truck, 'ዴሊቨሪ'],
             ].map(([label, Icon, labelAmharic]) => {
               const IconComp = Icon as React.ElementType;

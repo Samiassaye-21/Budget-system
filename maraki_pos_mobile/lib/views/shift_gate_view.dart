@@ -1,9 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/pos_provider.dart';
+import '../services/supabase_service.dart';
 import '../services/update_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/cloud_sync_dialog.dart';
 import '../widgets/pin_pad_dialog.dart';
+
+enum GateShowcaseItem {
+  kitchen,
+  dayShift,
+  nightShift,
+}
 
 class ShiftGateView extends StatefulWidget {
   const ShiftGateView({super.key});
@@ -16,14 +26,16 @@ class _ShiftGateViewState extends State<ShiftGateView> {
   AppUpdateInfo? _updateInfo;
   bool _isDownloading = false;
   int _downloadProgress = 0;
+  GateShowcaseItem _activeItem = GateShowcaseItem.dayShift;
 
   @override
   void initState() {
     super.initState();
-    _checkUpdate();
+    _checkForUpdatesSilently();
   }
 
-  Future<void> _checkUpdate() async {
+  Future<void> _checkForUpdatesSilently() async {
+    if (kIsWeb) return;
     try {
       final info = await UpdateService.checkForUpdate();
       if (mounted && info.hasUpdate) {
@@ -31,17 +43,18 @@ class _ShiftGateViewState extends State<ShiftGateView> {
           _updateInfo = info;
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      // Retain silent offline operation
+    }
   }
 
   Future<void> _executeOtaDownload(String apkUrl) async {
-    if (apkUrl.isEmpty) return;
     setState(() {
       _isDownloading = true;
       _downloadProgress = 0;
     });
 
-    await UpdateService.downloadAndInstallApk(
+    final success = await UpdateService.downloadAndInstallApk(
       apkUrl,
       onProgress: (progress) {
         if (mounted) {
@@ -50,29 +63,22 @@ class _ShiftGateViewState extends State<ShiftGateView> {
           });
         }
       },
-      onError: (err) {
+      onError: (errMsg) {
         if (mounted) {
           setState(() {
             _isDownloading = false;
           });
-          showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-              title: const Text('የማዘመን ስህተት (Update Error)'),
-              content: Text(err),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('እሺ (OK)'),
-                ),
-              ],
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('የማዘመን ስህተት፡ $errMsg'),
+              backgroundColor: AppColors.obsidian,
             ),
           );
         }
       },
     );
 
-    if (mounted) {
+    if (!success && mounted) {
       setState(() {
         _isDownloading = false;
       });
@@ -82,362 +88,667 @@ class _ShiftGateViewState extends State<ShiftGateView> {
   @override
   Widget build(BuildContext context) {
     final pos = context.watch<POSProvider>();
+    final isDayActive = pos.isDayShiftActive;
+    final isNightActive = pos.isNightShiftActive;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFC),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 700),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Optional Auto-Update Available Banner
-                  if (_updateInfo != null && _updateInfo!.hasUpdate) ...[
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      margin: const EdgeInsets.only(bottom: 24),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.green.shade300, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
-                        ],
+      backgroundColor: const Color(0xFFF4F7F6), // Soft pale mint/cream backdrop
+      body: Stack(
+        children: [
+          // Background organic curves
+          Positioned(
+            top: -120,
+            right: -80,
+            child: Container(
+              width: 460,
+              height: 460,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primaryLight.withValues(alpha: 0.4),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -100,
+            left: -100,
+            child: Container(
+              width: 360,
+              height: 360,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primarySoft.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 880),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 32,
+                        offset: const Offset(0, 8),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Top Row: Empty Left spacer, Center Maraki Logo + Title, Top-Right Online Status
+                      Stack(
+                        alignment: Alignment.center,
                         children: [
-                          Row(
+                          // Top-Right Online Status Pill (Interactive)
+                          Align(
+                            alignment: Alignment.topRight,
+                            child: ValueListenableBuilder<SupabaseSyncStatus>(
+                              valueListenable: SupabaseService.instance.statusNotifier,
+                              builder: (ctx, status, _) {
+                                final isOnline = status == SupabaseSyncStatus.online;
+                                final isSyncing = status == SupabaseSyncStatus.syncing;
+
+                                return InkWell(
+                                  onTap: () => CloudSyncDialog.show(context),
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Tooltip(
+                                    message: 'ክላውድ ማመሳሰያ ቅንብር እና ሁኔታን ይመልከቱ (Cloud Sync Info)',
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: isOnline ? Colors.green.shade50 : Colors.amber.shade50,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isOnline ? Colors.green.shade300 : Colors.amber.shade300,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 7,
+                                            height: 7,
+                                            decoration: BoxDecoration(
+                                              color: isOnline ? Colors.green.shade600 : Colors.amber.shade700,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            isSyncing
+                                                ? 'Syncing...'
+                                                : isOnline
+                                                    ? 'Online'
+                                                    : 'Offline',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: isOnline ? Colors.green.shade800 : Colors.amber.shade900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+
+                          // Top-Center: Large Logo & Maraki Title
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(color: Colors.green.shade100, shape: BoxShape.circle),
-                                child: const Icon(Icons.system_update, color: Colors.green, size: 20),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'አዲስ ማሻሻያ ተገኝቷል (v${_updateInfo!.latestVersion})',
-                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.green.shade900),
+                                width: 62,
+                                height: 62,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: AppColors.primary, width: 2.5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(alpha: 0.25),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
                                     ),
+                                  ],
+                                ),
+                                child: ClipOval(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(3),
+                                    child: Image.asset(
+                                      'assets/logo.png',
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) => const Icon(Icons.restaurant, color: AppColors.primary, size: 28),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'ማራኪ ካፌ እና ሬስቶራንት',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.obsidian,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const Text(
+                                'MARAKI CAFE & RESTAURANT POS • ቦሌ ቅርንጫፍ',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primarySoft,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.calendar_today_rounded, size: 13, color: AppColors.primary),
+                                    const SizedBox(width: 6),
                                     Text(
-                                      _updateInfo!.releaseNotes,
-                                      style: TextStyle(fontSize: 11, color: Colors.green.shade800),
+                                      DateHelper.todayFormatted(),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.obsidian,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          if (_isDownloading) ...[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text('በማውረድ ላይ...', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green)),
-                                Text('$_downloadProgress%', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.green)),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            LinearProgressIndicator(
-                              value: _downloadProgress / 100.0,
-                              backgroundColor: Colors.green.shade100,
-                              valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
-                              minHeight: 6,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ] else
-                            SizedBox(
-                              width: double.infinity,
-                              height: 40,
-                              child: ElevatedButton.icon(
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // In-App OTA Update Banner
+                      if (_updateInfo != null && _updateInfo!.hasUpdate) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySoft,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.system_update_alt_rounded, color: AppColors.primary, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'አዲስ ስሪት ተገኝቷል (v${_updateInfo!.latestVersion}): ${_updateInfo!.releaseNotes}',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.obsidian),
+                                ),
+                              ),
+                              ElevatedButton(
                                 onPressed: () => _executeOtaDownload(_updateInfo!.apkUrl),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF047857),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  backgroundColor: AppColors.primary,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
-                                icon: const Icon(Icons.download, size: 16, color: Colors.white),
-                                label: const Text('አሁን በ 1-Tap አዘምን (Update)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white)),
+                                child: const Text('አዘምን', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  // Logo & Brand
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
+                            ],
+                          ),
                         ),
                       ],
-                      border: Border.all(color: Colors.amber.shade200, width: 2),
-                    ),
-                    child: const Center(
-                      child: Text('🍊', style: TextStyle(fontSize: 36)),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'ማራኪ POS',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF1A202C),
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const Text(
-                    'አዲስ አበባ • ቦሌ ቅርንጫፍ',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                      color: Colors.amber,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'የሺፍት የስራ ቦታ ምርጫ (Shift Selection Gate)',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF718096),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
 
-                  // Shift Selection Cards
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isNarrow = constraints.maxWidth < 450;
-                      if (isNarrow) {
-                        return Column(
-                          children: [
-                            _buildShiftCard(
-                              context,
-                              title: 'የቀን ሺፍት (Day Shift)',
-                              time: '8:00 AM – 4:00 PM',
-                              icon: Icons.wb_sunny_rounded,
-                              iconColor: const Color(0xFFD69E2E),
-                              bgColor: const Color(0xFFFFFDF5),
-                              borderColor: const Color(0xFFECC94B),
-                              onTap: () => pos.selectShift(ShiftType.day),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildShiftCard(
-                              context,
-                              title: 'የማታ ሺፍት (Night Shift)',
-                              time: '4:00 PM – 11:30 PM',
-                              icon: Icons.nightlight_round,
-                              iconColor: const Color(0xFF6B46C1),
-                              bgColor: const Color(0xFFFAF5FF),
-                              borderColor: const Color(0xFFB794F4),
-                              onTap: () => pos.selectShift(ShiftType.night),
-                            ),
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: _buildShiftCard(
-                              context,
-                              title: 'የቀን ሺፍት (Day Shift)',
-                              time: '8:00 AM – 4:00 PM',
-                              icon: Icons.wb_sunny_rounded,
-                              iconColor: const Color(0xFFD69E2E),
-                              bgColor: const Color(0xFFFFFDF5),
-                              borderColor: const Color(0xFFECC94B),
-                              onTap: () => pos.selectShift(ShiftType.day),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildShiftCard(
-                              context,
-                              title: 'የማታ ሺፍት (Night Shift)',
-                              time: '4:00 PM – 11:30 PM',
-                              icon: Icons.nightlight_round,
-                              iconColor: const Color(0xFF6B46C1),
-                              bgColor: const Color(0xFFFAF5FF),
-                              borderColor: const Color(0xFFB794F4),
-                              onTap: () => pos.selectShift(ShiftType.night),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Workspace Alternate Links (Kitchen & Admin)
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: () => pos.setMode(AppMode.kitchen),
-                        icon: const Icon(Icons.restaurant_menu, size: 18, color: Color(0xFF2D3748)),
-                        label: const Text('የወጥ ቤት ማሳያ (Kitchen)', style: TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.bold)),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          side: BorderSide(color: Colors.grey.shade300),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      // Hero Subtitle
+                      const Text(
+                        'The happiest hour of the day',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.obsidian,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => PinPadDialog(
-                              title: 'የአድሚን ዳሽቦርድ መግቢያ',
-                              subtitle: 'የአድሚን PIN ያስገቡ (ነባሪ PIN: 1234)',
-                              onConfirm: (pin) => pos.setMode(AppMode.admin),
-                            ),
-                          );
+                      const SizedBox(height: 4),
+                      Text(
+                        'ትኩስ ጁሶች፣ ምግቦች እና ፈጣን የሽያጭ ስርዓት። የስራ ቦታዎን ይምረጡ።',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Interactive 3-Card Showcase
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 680;
+                          return _buildInteractiveShowcase(pos, isDayActive, isNightActive, isNarrow);
                         },
-                        icon: const Icon(Icons.admin_panel_settings, size: 18, color: Color(0xFF2D3748)),
-                        label: const Text('አድሚን (Admin)', style: TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.bold)),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          side: BorderSide(color: Colors.grey.shade300),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
                       ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                      const SizedBox(height: 24),
+                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      const SizedBox(height: 14),
+
+                      // Bottom Row: Admin Button on Bottom-Left, Motto on Bottom-Right
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 12,
+                        runSpacing: 10,
                         children: [
-                          Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
-                          const SizedBox(width: 6),
-                          const Text('ሲስተም ዝግጁ ነው • ሎካል & ደመና', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                          // Bottom-Left Admin Button
+                          InkWell(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => PinPadDialog(
+                                  title: 'የአድሚን ዳሽቦርድ መግቢያ',
+                                  subtitle: 'የአድሚን PIN ያስገቡ (ነባሪ PIN: ${pos.adminPin})',
+                                  requiredPin: pos.adminPin,
+                                  onConfirm: (pin) => pos.setMode(AppMode.admin),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.admin_panel_settings_rounded, size: 16, color: AppColors.primary),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'አድሚን ዳሽቦርድ (PIN)',
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.obsidian),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Bottom-Right Brand Motto
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.stars_rounded, size: 14, color: AppColors.primary),
+                                SizedBox(width: 6),
+                                Text(
+                                  '✨ ጥራት ያለው መስተንግዶ • ፈጣን አገልግሎት (v2.7.0)',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.obsidian,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                      const Text('ማራኪ POS v2.6.2', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildShiftCard(
-    BuildContext context, {
-    required String title,
-    required String time,
-    required IconData icon,
-    required Color iconColor,
-    required Color bgColor,
-    required Color borderColor,
-    required VoidCallback onTap,
+  // Interactive 3-Card Carousel Builder
+  Widget _buildInteractiveShowcase(POSProvider pos, bool isDayActive, bool isNightActive, bool isNarrow) {
+    // Dynamic order: whichever card is active will be placed in the center!
+    final List<GateShowcaseItem> orderedItems = [
+      GateShowcaseItem.kitchen,
+      GateShowcaseItem.dayShift,
+      GateShowcaseItem.nightShift,
+    ];
+
+    // Rearrange so the active item is in the middle on wide screens
+    if (!isNarrow) {
+      orderedItems.remove(_activeItem);
+      orderedItems.insert(1, _activeItem); // Place active in middle index 1
+    }
+
+    if (isNarrow) {
+      return Column(
+        children: orderedItems.map((item) {
+          final isHighlighted = item == _activeItem;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: _buildShowcaseCard(
+              item: item,
+              isHighlighted: isHighlighted,
+              pos: pos,
+              isDayActive: isDayActive,
+              isNightActive: isNightActive,
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          flex: orderedItems[0] == _activeItem ? 4 : 3,
+          child: _buildShowcaseCard(
+            item: orderedItems[0],
+            isHighlighted: orderedItems[0] == _activeItem,
+            pos: pos,
+            isDayActive: isDayActive,
+            isNightActive: isNightActive,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          flex: orderedItems[1] == _activeItem ? 4 : 3,
+          child: _buildShowcaseCard(
+            item: orderedItems[1],
+            isHighlighted: orderedItems[1] == _activeItem,
+            pos: pos,
+            isDayActive: isDayActive,
+            isNightActive: isNightActive,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          flex: orderedItems[2] == _activeItem ? 4 : 3,
+          child: _buildShowcaseCard(
+            item: orderedItems[2],
+            isHighlighted: orderedItems[2] == _activeItem,
+            pos: pos,
+            isDayActive: isDayActive,
+            isNightActive: isNightActive,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Universal Card Component (Highlighted in Amber or Side Surface)
+  Widget _buildShowcaseCard({
+    required GateShowcaseItem item,
+    required bool isHighlighted,
+    required POSProvider pos,
+    required bool isDayActive,
+    required bool isNightActive,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(24),
+    String title;
+    String subtitle;
+    IconData icon;
+    String hours;
+    String status;
+    String buttonText;
+    VoidCallback onAction;
+
+    switch (item) {
+      case GateShowcaseItem.kitchen:
+        title = 'የወጥ ቤት ማሳያ';
+        subtitle = 'Kitchen Workspace';
+        icon = Icons.restaurant_menu_rounded;
+        hours = 'ቀጥታ ትዕዛዞች';
+        status = '🟢 ዝግጁ (Ready)';
+        buttonText = 'ወደ ኩሽና ግባ (ENTER)';
+        onAction = () => pos.setMode(AppMode.kitchen);
+        break;
+      case GateShowcaseItem.dayShift:
+        title = 'የቀን ሺፍት';
+        subtitle = 'Day Shift Session';
+        icon = Icons.wb_sunny_rounded;
+        hours = DateHelper.dayShiftHours;
+        status = isDayActive ? '🟢 ንቁ (Active)' : 'ዝግጁ (Ready)';
+        buttonText = isDayActive ? 'ሺፍቱን ቀጥል (RESUME)' : 'ሺፍት ጀምር (START)';
+        onAction = () => pos.selectShift(ShiftType.day);
+        break;
+      case GateShowcaseItem.nightShift:
+        title = 'የማታ ሺፍት';
+        subtitle = 'Night Shift Session';
+        icon = Icons.nightlight_round;
+        hours = DateHelper.nightShiftHours;
+        status = isNightActive ? '🟢 ንቁ (Active)' : 'ዝግጁ (Ready)';
+        buttonText = isNightActive ? 'ሺፍቱን ቀጥል (RESUME)' : 'ሺፍት ጀምር (START)';
+        onAction = () => pos.selectShift(ShiftType.night);
+        break;
+    }
+
+    if (isHighlighted) {
+      // Golden Sunset Amber Dominant Hero Card
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: borderColor, width: 2),
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: AppColors.primary.withValues(alpha: 0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: Column(
           children: [
+            // Floating Visual Top
             Container(
-              padding: const EdgeInsets.all(16),
+              width: 68,
+              height: 68,
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: iconColor.withOpacity(0.15),
-                    blurRadius: 10,
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Icon(icon, size: 36, color: iconColor),
+              child: Icon(icon, size: 36, color: AppColors.primary),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
+
             Text(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF1A202C),
+                color: Colors.white,
               ),
             ),
-            const SizedBox(height: 4),
             Text(
-              time,
-              style: TextStyle(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Meta Spec Box
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                children: [
+                  _buildSpecRow('ሰዓት/ሁኔታ', hours),
+                  const Divider(color: Colors.white24, height: 10),
+                  _buildSpecRow('ቦታ', 'ቦሌ (Bole)'),
+                  const Divider(color: Colors.white24, height: 10),
+                  _buildSpecRow('ስታተስ', status),
+                ],
               ),
             ),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE53E3E),
-                borderRadius: BorderRadius.circular(10),
+
+            // Big Action Button
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: onAction,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.obsidian,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      buttonText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.white),
+                  ],
+                ),
               ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'ሺፍት ክፈት',
-                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Side Surface Card
+    return InkWell(
+      onTap: () => setState(() => _activeItem = item),
+      borderRadius: BorderRadius.circular(24),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border, width: 1.5),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 26, color: AppColors.obsidian),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: AppColors.obsidian,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: OutlinedButton(
+                onPressed: () => setState(() => _activeItem = item),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.border, width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text(
+                  'ምረጥ (SELECT)',
+                  style: TextStyle(
+                    color: AppColors.obsidian,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
                   ),
-                  SizedBox(width: 4),
-                  Icon(Icons.arrow_forward, size: 14, color: Colors.white),
-                ],
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSpecRow(String label, String val) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white70),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            val,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

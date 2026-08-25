@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
 import '../providers/pos_provider.dart';
+import '../theme/app_theme.dart';
 
 class PayLaterModal extends StatefulWidget {
   final VoidCallback onAllResolved;
@@ -43,20 +44,20 @@ class _PayLaterModalState extends State<PayLaterModal> {
             // Header
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.amber.shade50,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(bottom: BorderSide(color: Colors.amber.shade200)),
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(bottom: BorderSide(color: AppColors.border)),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.amber.shade100,
+                      color: AppColors.primarySoft,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.receipt_long, color: Color(0xFFC05621)),
+                    child: const Icon(Icons.receipt_long, color: AppColors.primary),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -65,11 +66,11 @@ class _PayLaterModalState extends State<PayLaterModal> {
                       children: [
                         const Text(
                           'ያልተጠናቀቁ ክፍያዎች (Pay Later)',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.obsidian),
                         ),
                         Text(
                           'ሺፍቱን ከመዝጋትዎ በፊት ${pendingOrders.length} የ"በኋላ ክፍያ" ትዕዛዞችን ይወስኑ',
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                          style: const TextStyle(fontSize: 12, color: AppColors.slate),
                         ),
                       ],
                     ),
@@ -95,15 +96,15 @@ class _PayLaterModalState extends State<PayLaterModal> {
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: currentMethod != null ? Colors.green.shade300 : Colors.amber.shade300,
+                        color: currentMethod != null ? Colors.green.shade300 : AppColors.primary.withValues(alpha: 0.4),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: AppColors.obsidian.withValues(alpha: 0.03),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -114,21 +115,57 @@ class _PayLaterModalState extends State<PayLaterModal> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'ትዕዛዝ #${order.id.replaceAll('ord-', '')}',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF1A202C)),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    order.items.map((i) {
+                                      final matches = pos.products.where((p) => p.id == i.productId || p.name.toLowerCase() == i.name.toLowerCase() || p.amharicName == i.name);
+                                      final amharicTitle = matches.isNotEmpty && matches.first.amharicName.isNotEmpty
+                                          ? matches.first.amharicName
+                                          : i.name;
+                                      return '$amharicTitle × ${i.quantity}';
+                                    }).join(', '),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.obsidian,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.grey.shade300),
+                                    ),
+                                    child: Text(
+                                      'ትዕዛዝ #${order.id.replaceAll('ord-', '')}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 12),
                             Text(
                               '${order.total.toStringAsFixed(0)} ETB',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFFE53E3E)),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          order.items.map((i) => '${i.name} × ${i.quantity}').join(', '),
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                         ),
                         const SizedBox(height: 12),
 
@@ -165,7 +202,7 @@ class _PayLaterModalState extends State<PayLaterModal> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: _buildChoiceChip(
-                                label: 'በብድር (Credit)',
+                                label: 'አዳሪ (Adari)',
                                 icon: Icons.credit_card,
                                 isSelected: currentMethod == 'Credit',
                                 color: Colors.purple,
@@ -184,7 +221,7 @@ class _PayLaterModalState extends State<PayLaterModal> {
                           const SizedBox(height: 12),
                           TextField(
                             decoration: InputDecoration(
-                              labelText: 'የባለዕዳ ደንበኛ ስም (Customer Name) *ግዴታ',
+                              labelText: 'የአዳሪ ደንበኛ ስም (Customer Name) *ግዴታ',
                               hintText: 'ምሳሌ: አቶ ከበደ / ቢሮ ቁጥር 12',
                               filled: true,
                               fillColor: Colors.purple.shade50,
@@ -233,11 +270,18 @@ class _PayLaterModalState extends State<PayLaterModal> {
                             if (res == 'Credit') {
                               final name = _customerNames[order.id]?.trim() ?? 'ያልታወቀ ደንበኛ';
                               final cupCount = order.items.fold(0, (sum, i) => sum + i.quantity);
+                              final noteItems = order.items.map((i) {
+                                final matches = pos.products.where((p) => p.id == i.productId || p.name.toLowerCase() == i.name.toLowerCase() || p.amharicName == i.name);
+                                final amharicTitle = matches.isNotEmpty && matches.first.amharicName.isNotEmpty
+                                    ? matches.first.amharicName
+                                    : i.name;
+                                return '$amharicTitle × ${i.quantity}';
+                              }).join(', ');
                               newDebts.add(
                                 CustomerDebt(
                                   id: 'deb-${_uuid.v4().substring(0, 6)}',
                                   customerName: name,
-                                  note: order.items.map((i) => '${i.name} × ${i.quantity}').join(', '),
+                                  note: noteItems,
                                   cupCount: cupCount,
                                   pricePerCup: cupCount > 0 ? (order.total / cupCount) : 170.0,
                                   amount: order.total,
@@ -255,8 +299,8 @@ class _PayLaterModalState extends State<PayLaterModal> {
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53E3E),
-                    disabledBackgroundColor: Colors.grey.shade300,
+                    backgroundColor: AppColors.primary,
+                    disabledBackgroundColor: AppColors.border,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: Text(

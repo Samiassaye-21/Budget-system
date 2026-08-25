@@ -1,8 +1,8 @@
 {
-  "version": "2.6.2",
-  "buildNumber": 5,
-  "apkUrl": "https://github.com/Samiassaye-21/Budget-system/releases/download/v2.6.2/maraki_pos_arm64.apk",
-  "releaseNotes": "ማራኪ POS v2.6.2 - የማራኪ ብራንድ አርማ (Brand Logo), የላይኛው አስተላልፍ (Top Fire Button) እና ሙሉ የሞባይል Responsive ማሻሻያዎች ተካተዋል",
+  "version": "2.7.0",
+  "buildNumber": 6,
+  "apkUrl": "https://github.com/Samiassaye-21/Budget-system/releases/download/v2.7.0/maraki_pos_arm64.apk",
+  "releaseNotes": "ማራኪ POS v2.7.0 - ኦፊሴላዊ ብራንድ ሎጎ በሁሉም ገጾች፣ ፈጣን 0-ms የክፍያ መምረጫ (Fast Tap Payments)፣ የታብሌት እና የስልክ Adaptive Responsive Layout እና Offline-First Realtime Auto-Sync ተካቷል",
   "forceUpdate": false,
-  "updatedAt": "2026-08-19T09:35:00Z"
+  "updatedAt": "2026-08-19T14:05:00Z"
 }
