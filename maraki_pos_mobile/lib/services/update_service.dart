@@ -116,10 +116,12 @@ class UpdateService {
 
       // 3. Download APK with Stream progress
       final client = http.Client();
-      final request = http.Request('GET', Uri.parse(apkUrl));
+      final request = http.Request('GET', Uri.parse(apkUrl))
+        ..followRedirects = true
+        ..maxRedirects = 10;
       final response = await client.send(request);
 
-      if (response.statusCode != 200) {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
         onError('ፋይሉን ማውረድ አልተቻለም (HTTP ${response.statusCode})');
         return false;
       }

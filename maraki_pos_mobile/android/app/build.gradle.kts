@@ -33,11 +33,6 @@ android {
         }
     }
 
-    packaging {
-        jniLibs {
-            keepDebugSymbols.add("**")
-        }
-    }
 
     lint {
         checkReleaseBuilds = false
