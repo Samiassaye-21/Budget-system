@@ -246,7 +246,7 @@ class _KitchenWorkspaceViewState extends State<KitchenWorkspaceView> {
           // Online / Offline Status (Interactive)
           ValueListenableBuilder<SupabaseSyncStatus>(
             valueListenable: SupabaseService.instance.statusNotifier,
-            builder: (_, status, __) {
+            builder: (_, status, _) {
               final isOnline = status == SupabaseSyncStatus.online;
               final isSyncing = status == SupabaseSyncStatus.syncing;
               return InkWell(

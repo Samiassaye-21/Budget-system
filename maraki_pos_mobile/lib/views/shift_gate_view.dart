@@ -253,7 +253,7 @@ class _ShiftGateViewState extends State<ShiftGateView> {
                                     child: Image.asset(
                                       'assets/logo.png',
                                       fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) => const Icon(Icons.restaurant, color: AppColors.primary, size: 28),
+                                      errorBuilder: (_, _, _) => const Icon(Icons.restaurant, color: AppColors.primary, size: 28),
                                     ),
                                   ),
                                 ),

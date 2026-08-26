@@ -26,8 +26,8 @@ class AppUpdateInfo {
 }
 
 class UpdateService {
-  static const String currentAppVersion = '2.6.2';
-  static const int currentBuildNumber = 5;
+  static const String currentAppVersion = '2.7.0';
+  static const int currentBuildNumber = 8;
   static const String androidAppId = 'com.marakipos.maraki_pos_mobile';
 
   // Remote Manifest Endpoint
@@ -80,18 +80,7 @@ class UpdateService {
     );
   }
 
-  /// Check & Request Install Unknown Apps permission
-  static Future<bool> ensureInstallPermission() async {
-    if (kIsWeb || !Platform.isAndroid) return true;
-
-    final status = await Permission.requestInstallPackages.status;
-    if (status.isGranted) return true;
-
-    final result = await Permission.requestInstallPackages.request();
-    return result.isGranted;
-  }
-
-  /// Download APK to external storage and trigger native installer
+  /// Download APK to local storage and trigger native installer
   static Future<bool> downloadAndInstallApk(
     String apkUrl, {
     required void Function(int progress) onProgress,
@@ -99,24 +88,27 @@ class UpdateService {
     void Function(int receivedBytes)? onBytesReceived,
   }) async {
     try {
-      // 1. Verify Permission BEFORE download
-      final hasPerm = await ensureInstallPermission();
-      if (!hasPerm) {
-        onError('እባክዎ በስልክዎ Settings ውስጥ "Install Unknown Apps" ፍቃድ ይስጡ።');
+      if (apkUrl.isEmpty) {
+        onError('የማዘመኛ አድራሻ (APK URL) አልተገኘም።');
         return false;
       }
 
-      // 2. Resolve External Files Directory (Accessible by FileProvider)
-      final Directory? externalDir = await getExternalStorageDirectory();
-      final Directory targetDir = externalDir ?? await getTemporaryDirectory();
+      // 1. Resolve Target Directory (Try external files first, then temp/cache)
+      Directory? targetDir;
+      try {
+        targetDir = await getExternalStorageDirectory();
+      } catch (_) {}
+      targetDir ??= await getTemporaryDirectory();
+
       final File apkFile = File('${targetDir.path}/maraki_pos_update.apk');
 
       if (await apkFile.exists()) {
-        await apkFile.delete();
+        try {
+          await apkFile.delete();
+        } catch (_) {}
       }
 
-      // 3. Download APK with Stream progress
-      //    Use http.Client with redirects (GitHub releases return 302→CDN)
+      // 2. Download APK with Stream progress
       final client = http.Client();
       final request = http.Request('GET', Uri.parse(apkUrl))
         ..followRedirects = true
@@ -125,6 +117,7 @@ class UpdateService {
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         onError('ፋይሉን ማውረድ አልተቻለም (HTTP ${response.statusCode})');
+        client.close();
         return false;
       }
 
@@ -135,7 +128,6 @@ class UpdateService {
       await response.stream.listen((chunk) {
         sink.add(chunk);
         receivedBytes += chunk.length;
-        // Always report raw bytes so UI can show MB even without Content-Length
         onBytesReceived?.call(receivedBytes);
         if (totalBytes > 0) {
           final progress = ((receivedBytes / totalBytes) * 100).toInt();
@@ -147,13 +139,22 @@ class UpdateService {
       await sink.close();
       client.close();
 
-      // 4. Verify file exists and is not empty
+      // 3. Verify file exists and is not empty
       if (!await apkFile.exists() || await apkFile.length() <= 0) {
         onError('የወረደው የ APK ፋይል ባዶ ነው ወይም አልተገኘም።');
         return false;
       }
 
-      // 5. Trigger Native Installer via OpenFilex (Android v2 embedding FileProvider)
+      // 4. Check Unknown Apps Install Permission on Android
+      if (!kIsWeb && Platform.isAndroid) {
+        final status = await Permission.requestInstallPackages.status;
+        if (!status.isGranted) {
+          // Request permission / open settings
+          await Permission.requestInstallPackages.request();
+        }
+      }
+
+      // 5. Trigger Native Installer via OpenFilex
       final result = await OpenFilex.open(
         apkFile.path,
         type: 'application/vnd.android.package-archive',
@@ -161,13 +162,21 @@ class UpdateService {
 
       debugPrint('OpenFilex result: ${result.type} - ${result.message}');
       if (result.type != ResultType.done) {
-        onError('መጫኛውን መክፈት አልተቻለም: ${result.message}\nእባክዎ "Install unknown apps" ፍቃድ መብራቱን ያረጋግጡ።');
+        // If OpenFilex reports an issue, guide the user
+        if (result.message.toLowerCase().contains('permission') ||
+            result.message.toLowerCase().contains('security') ||
+            result.type == ResultType.permissionDenied) {
+          await openAppSettings();
+          onError('እባክዎ በስልክዎ Settings ውስጥ "Install Unknown Apps" ፍቃድ ይስጡ።');
+        } else {
+          onError('መጫኛውን መክፈት አልተቻለም: ${result.message}');
+        }
         return false;
       }
       return true;
     } catch (e) {
       debugPrint('downloadAndInstallApk Error: $e');
-      onError('የማዘመን ስህተት: $e\nእባክዎ "Install unknown apps" ፍቃድ መብራቱን ያረጋግጡ።');
+      onError('የማዘመን ስህተት: $e');
       return false;
     }
   }

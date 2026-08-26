@@ -249,7 +249,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                     const SizedBox(width: 10),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: cat,
+                        initialValue: cat,
                         decoration: const InputDecoration(
                           labelText: 'ምድብ',
                           border: OutlineInputBorder(),
@@ -304,8 +304,9 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                 final newPrice = double.tryParse(priceCtrl.text.trim());
                 if (nameCtrl.text.trim().isEmpty ||
                     newPrice == null ||
-                    newPrice <= 0)
+                    newPrice <= 0) {
                   return;
+                }
                 final updated = product.copyWith(
                   name: nameCtrl.text.trim(),
                   amharicName: amharicCtrl.text.trim(),
@@ -597,7 +598,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
-                  value: category,
+                  initialValue: category,
                   decoration: const InputDecoration(
                     labelText: 'የወጪ ዓይነት (Category)*',
                     border: OutlineInputBorder(),
@@ -1281,7 +1282,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                   child: Image.asset(
                     'assets/logo.png',
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
+                    errorBuilder: (_, _, _) => const Icon(
                       Icons.admin_panel_settings,
                       color: AppColors.primary,
                       size: 14,
@@ -1544,7 +1545,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                       const SizedBox(width: 8),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: _productCategory,
+                          initialValue: _productCategory,
                           decoration: const InputDecoration(
                             labelText: 'ምድብ',
                             border: OutlineInputBorder(),
@@ -1608,7 +1609,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: filtered.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   const Divider(height: 1, color: AppColors.borderLight),
               itemBuilder: (context, index) {
                 final p = filtered[index];
@@ -2178,7 +2179,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: topSelling.length > 5 ? 5 : topSelling.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const Divider(height: 1, color: AppColors.borderLight),
                 itemBuilder: (context, index) {
                   final item = topSelling[index];
@@ -2242,9 +2243,10 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
             builder: (context) {
               final listOrders = filteredOrders.where((o) {
                 if (_analyticsPaymentFilter == 'All') return true;
-                if (_analyticsPaymentFilter == 'Credit')
+                if (_analyticsPaymentFilter == 'Credit') {
                   return o.paymentMethod == 'Credit' ||
                       o.paymentMethod == 'Pay later';
+                }
                 return o.paymentMethod == _analyticsPaymentFilter;
               }).toList();
 
@@ -2294,7 +2296,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: listOrders.length,
-                        separatorBuilder: (_, __) => const Divider(
+                        separatorBuilder: (_, _) => const Divider(
                           height: 1,
                           color: AppColors.borderLight,
                         ),
@@ -2878,7 +2880,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const Divider(height: 1, color: AppColors.borderLight),
                 itemBuilder: (context, index) {
                   final d = filtered[index];
@@ -3173,7 +3175,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: filteredTickets.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const Divider(height: 1, color: AppColors.borderLight),
                 itemBuilder: (context, index) {
                   final t = filteredTickets[index];
@@ -3346,7 +3348,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const Divider(height: 1, color: AppColors.borderLight),
                 itemBuilder: (context, index) {
                   final r = filtered[index];
@@ -3598,7 +3600,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const Divider(height: 1, color: AppColors.borderLight),
                 itemBuilder: (context, index) {
                   final exp = filtered[index];
@@ -4412,7 +4414,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (_, __, ___) => Container(
+        errorBuilder: (_, _, _) => Container(
           width: width,
           height: height,
           color: AppColors.primarySoft,
@@ -4429,7 +4431,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (_, __, ___) => Container(
+        errorBuilder: (_, _, _) => Container(
           width: width,
           height: height,
           color: AppColors.primarySoft,

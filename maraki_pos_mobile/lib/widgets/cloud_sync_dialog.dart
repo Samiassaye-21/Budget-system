@@ -139,7 +139,7 @@ class _CloudSyncDialogState extends State<CloudSyncDialog> {
                     // Main Status Card
                     ValueListenableBuilder<SupabaseSyncStatus>(
                       valueListenable: SupabaseService.instance.statusNotifier,
-                      builder: (_, status, __) {
+                      builder: (_, status, _) {
                         final isOnline = status == SupabaseSyncStatus.online;
                         final isSyncing = status == SupabaseSyncStatus.syncing || _isTesting;
 

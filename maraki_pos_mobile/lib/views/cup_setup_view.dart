@@ -58,7 +58,7 @@ class _CupSetupViewState extends State<CupSetupView> {
                   border: Border.all(color: Colors.grey.shade200),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -91,7 +91,7 @@ class _CupSetupViewState extends State<CupSetupView> {
                               child: Image.asset(
                                 'assets/logo.png',
                                 fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.storefront, size: 16, color: Colors.amber),
+                                errorBuilder: (_, _, _) => const Icon(Icons.storefront, size: 16, color: Colors.amber),
                               ),
                             ),
                           ),

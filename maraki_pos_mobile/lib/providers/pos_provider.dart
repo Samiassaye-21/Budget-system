@@ -83,10 +83,12 @@ class POSProvider extends ChangeNotifier {
       _orders.where((o) => o.paymentMethod == 'Pay later').toList();
 
   bool isJuiceItem(OrderItem item) {
-    if (item.productId.startsWith('j-') || item.productId.startsWith('j_'))
+    if (item.productId.startsWith('j-') || item.productId.startsWith('j_')) {
       return true;
-    if (item.productId.startsWith('f-') || item.productId.startsWith('f_'))
+    }
+    if (item.productId.startsWith('f-') || item.productId.startsWith('f_')) {
       return false;
+    }
 
     final matches = _products.where(
       (p) =>

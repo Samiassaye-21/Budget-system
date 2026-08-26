@@ -89,7 +89,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),
@@ -102,7 +102,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                       child: Image.asset(
                         'assets/logo.png',
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.point_of_sale, size: 16, color: AppColors.primary),
+                        errorBuilder: (_, _, _) => const Icon(Icons.point_of_sale, size: 16, color: AppColors.primary),
                       ),
                     ),
                   ),
@@ -146,7 +146,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                 // Supabase Real-Time Live Status Pill
                 ValueListenableBuilder<SupabaseSyncStatus>(
                   valueListenable: SupabaseService.instance.statusNotifier,
-                  builder: (_, status, __) {
+                  builder: (_, status, _) {
                     final isOnline = status == SupabaseSyncStatus.online;
                     final isSyncing = status == SupabaseSyncStatus.syncing;
                     return InkWell(
@@ -260,7 +260,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
         if (_showSuccessToast)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               alignment: Alignment.center,
               child: Container(
                 padding: const EdgeInsets.all(24),
@@ -270,7 +270,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 20, offset: const Offset(0, 8)),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 8)),
                   ],
                 ),
                 child: Column(
@@ -334,7 +334,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, -4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, -4)),
               ],
             ),
             child: Row(
@@ -596,7 +596,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                   : ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: tickets.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final t = tickets[index];
                         final timeStr = '${t.createdAt.hour.toString().padLeft(2, '0')}:${t.createdAt.minute.toString().padLeft(2, '0')}';
@@ -1315,7 +1315,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: pos.currentCart.length,
-                  separatorBuilder: (_, __) => const Divider(height: 16),
+                  separatorBuilder: (_, _) => const Divider(height: 16),
                   itemBuilder: (context, index) {
                     final item = pos.currentCart[index];
                     return Row(
@@ -1583,7 +1583,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (_, __, ___) => Container(
+        errorBuilder: (_, _, _) => Container(
           width: width,
           height: height,
           color: AppColors.primarySoft,
@@ -1599,12 +1599,12 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
           width: width,
           height: height,
           fit: fit,
-          errorBuilder: (_, __, ___) => Image.network(
+          errorBuilder: (_, _, _) => Image.network(
             imageUrl,
             width: width,
             height: height,
             fit: fit,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               width: width,
               height: height,
               color: AppColors.primarySoft,
@@ -1618,7 +1618,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
           width: width,
           height: height,
           fit: fit,
-          errorBuilder: (_, __, ___) => Container(
+          errorBuilder: (_, _, _) => Container(
             width: width,
             height: height,
             color: AppColors.primarySoft,
@@ -1632,7 +1632,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (_, __, ___) => Container(
+        errorBuilder: (_, _, _) => Container(
           width: width,
           height: height,
           color: AppColors.primarySoft,

@@ -20,7 +20,7 @@ class _ShiftReconciliationViewState extends State<ShiftReconciliationView> {
 
   // Step 2 Cup Count & Food State
   final TextEditingController _leftoverController = TextEditingController();
-  int _addedCups = 0;
+  final int _addedCups = 0;
   bool _isFoodApproved = false;
 
   // Step 3 Expenses State
@@ -194,7 +194,7 @@ class _ShiftReconciliationViewState extends State<ShiftReconciliationView> {
                                 child: Image.asset(
                                   'assets/logo.png',
                                   fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => const Icon(Icons.receipt_long, size: 18, color: AppColors.primary),
+                                  errorBuilder: (_, _, _) => const Icon(Icons.receipt_long, size: 18, color: AppColors.primary),
                                 ),
                               ),
                             ),

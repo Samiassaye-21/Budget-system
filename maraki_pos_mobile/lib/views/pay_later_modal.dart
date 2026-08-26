@@ -88,7 +88,7 @@ class _PayLaterModalState extends State<PayLaterModal> {
               child: ListView.separated(
                 padding: const EdgeInsets.all(20),
                 itemCount: pendingOrders.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                separatorBuilder: (_, _) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final order = pendingOrders[index];
                   final currentMethod = _resolutions[order.id];
