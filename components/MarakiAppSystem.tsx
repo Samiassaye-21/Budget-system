@@ -14,9 +14,10 @@ import { ShiftReconciliationPage } from './ShiftReconciliationPage';
 interface MarakiAppSystemProps {
   initialProducts: Product[];
   initialDebts: CustomerDebt[];
+  onBackToGate?: () => void;
 }
 
-export function MarakiAppSystem({ initialProducts, initialDebts }: MarakiAppSystemProps) {
+export function MarakiAppSystem({ initialProducts, initialDebts, onBackToGate }: MarakiAppSystemProps) {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -189,8 +190,19 @@ export function MarakiAppSystem({ initialProducts, initialDebts }: MarakiAppSyst
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             
-            {/* Logo & Title */}
+            {/* Logo & Title & Back to Gate */}
             <div className="flex items-center gap-3">
+              {onBackToGate && (
+                <button
+                  type="button"
+                  onClick={onBackToGate}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#0B1D2C] text-xs font-black transition cursor-pointer"
+                  title="ወደ ዋናው ሲስተም መመለሻ"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>መግቢያ (Gate)</span>
+                </button>
+              )}
               <div className="h-10 w-10 bg-[#0B1D2C] text-amber-400 rounded-xl flex items-center justify-center shadow-md">
                 <Store className="w-5 h-5" />
               </div>
