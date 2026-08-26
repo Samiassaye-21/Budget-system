@@ -194,3 +194,18 @@ INSERT INTO public.customer_debts (id, customer_name, note, cup_count, price_per
 ('debt-2', 'Tigist Haile', 'Lunch order credit', 2, 170.00, 340.00, false),
 ('debt-3', 'Kebede Tassew', 'Juice boxes delivery credit', 1, 170.00, 170.00, false)
 ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
+-- 12. MANUAL SHIFT RECONCILIATION SUBSYSTEM EXTENSION (v3.0.0)
+-- ==============================================================================
+ALTER TABLE public.shift_reconciliations
+  ADD COLUMN IF NOT EXISTS entry_mode TEXT DEFAULT 'auto',
+  ADD COLUMN IF NOT EXISTS shift_date DATE,
+  ADD COLUMN IF NOT EXISTS juice_breakdown JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS food_box_inventory JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS food_sold_breakdown JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS transfer_records JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS pending_payments JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS recovered_payments JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS kitchen_data_found BOOLEAN DEFAULT false;
+

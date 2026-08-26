@@ -537,6 +537,25 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                   ),
                   Row(
                     children: [
+                      if (tickets.isNotEmpty) ...[
+                        TextButton(
+                          onPressed: () {
+                            for (final t in List.from(tickets)) {
+                              pos.deleteKitchenTicket(t.id);
+                            }
+                            Navigator.of(ctx).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('የኩሽና ቲኬቶች ተጠርገዋል'),
+                                backgroundColor: AppColors.obsidian,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          child: const Text('ሁሉንም አጽዳ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
                       if (tickets.length > 1)
                         ElevatedButton(
                           onPressed: () {
@@ -548,13 +567,13 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('ሁሉም የኩሽና ቲኬቶች ወደ ሽያጭ ገብተዋል!'),
-                                backgroundColor: Colors.green,
+                                backgroundColor: AppColors.obsidian,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green.shade700,
+                            backgroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -562,7 +581,7 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                         ),
                       IconButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        icon: const Icon(Icons.close, color: Colors.grey),
+                        icon: const Icon(Icons.close, color: AppColors.slate),
                       ),
                     ],
                   ),
@@ -591,6 +610,28 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Food Items on TOP in BOLD
+                              ...t.items.map(
+                                (item) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 2),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '• ${item.quantity}x ${item.name}',
+                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.obsidian),
+                                      ),
+                                      Text(
+                                        '${(item.price * item.quantity).toStringAsFixed(0)} ETB',
+                                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: AppColors.primaryDark),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Ticket Number & Route Info BELOW
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -603,8 +644,8 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Text(
-                                          '#${t.id.replaceAll("k-ticket-", "").toUpperCase()}',
-                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primaryDark),
+                                          'ቲኬት #${t.id.replaceAll("k-ticket-", "").toUpperCase()}',
+                                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: AppColors.primaryDark),
                                         ),
                                       ),
                                       const SizedBox(width: 6),
@@ -641,28 +682,9 @@ class _POSWorkspaceViewState extends State<POSWorkspaceView> {
                                   ),
                                   Text(
                                     'ሰዓት፡ $timeStr',
-                                    style: const TextStyle(fontSize: 11, color: AppColors.slate, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(fontSize: 10.5, color: AppColors.slate, fontWeight: FontWeight.bold),
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 8),
-                              ...t.items.map(
-                                (item) => Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 2),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '• ${item.quantity}x ${item.name}',
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.obsidian),
-                                      ),
-                                      Text(
-                                        '${(item.price * item.quantity).toStringAsFixed(0)} ETB',
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
-                                      ),
-                                    ],
-                                  ),
-                                ),
                               ),
                               const SizedBox(height: 12),
                               Row(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'supabase_service.dart';
 
 final List<Product> initialProducts = [
@@ -273,7 +274,58 @@ class DataService {
   int _lastLeftoverCups = 120;
 
   Future<void> init() async {
+    await _loadFromLocal();
     await syncCatalogFromCloud();
+  }
+
+  Future<void> _saveToLocal() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('lastLeftoverCups', _lastLeftoverCups);
+    await prefs.setString(
+      'orders',
+      json.encode(_orders.map((o) => o.toMap()).toList()),
+    );
+    await prefs.setString(
+      'kitchenTickets',
+      json.encode(_kitchenTickets.map((k) => k.toMap()).toList()),
+    );
+    await prefs.setString(
+      'debts',
+      json.encode(_debts.map((d) => d.toMap()).toList()),
+    );
+    await prefs.setString(
+      'expenses',
+      json.encode(_expenses.map((e) => e.toMap()).toList()),
+    );
+  }
+
+  Future<void> _loadFromLocal() async {
+    final prefs = await SharedPreferences.getInstance();
+    _lastLeftoverCups = prefs.getInt('lastLeftoverCups') ?? 120;
+
+    final ordersStr = prefs.getString('orders');
+    if (ordersStr != null) {
+      final List<dynamic> list = json.decode(ordersStr);
+      _orders = list.map((m) => Order.fromMap(m)).toList();
+    }
+
+    final ticketsStr = prefs.getString('kitchenTickets');
+    if (ticketsStr != null) {
+      final List<dynamic> list = json.decode(ticketsStr);
+      _kitchenTickets = list.map((m) => KitchenTicket.fromMap(m)).toList();
+    }
+
+    final debtsStr = prefs.getString('debts');
+    if (debtsStr != null) {
+      final List<dynamic> list = json.decode(debtsStr);
+      _debts = list.map((m) => CustomerDebt.fromMap(m)).toList();
+    }
+
+    final expStr = prefs.getString('expenses');
+    if (expStr != null) {
+      final List<dynamic> list = json.decode(expStr);
+      _expenses = list.map((m) => ShiftExpense.fromMap(m)).toList();
+    }
   }
 
   /// Automatically syncs catalog from cloud without any APK reinstalls
@@ -282,7 +334,9 @@ class DataService {
       final cacheBuster = DateTime.now().millisecondsSinceEpoch;
       final response = await http
           .get(
-            Uri.parse('https://raw.githubusercontent.com/Samiassaye-21/Budget-system/main/public/catalog.json?t=$cacheBuster'),
+            Uri.parse(
+              'https://raw.githubusercontent.com/Samiassaye-21/Budget-system/main/public/catalog.json?t=$cacheBuster',
+            ),
             headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'},
           )
           .timeout(const Duration(seconds: 6));
@@ -294,8 +348,13 @@ class DataService {
           final local = initialMap[p.id];
           if (local != null) {
             return p.copyWith(
-              amharicName: p.amharicName.isNotEmpty ? p.amharicName : local.amharicName,
-              imageUrl: (p.imageUrl.isNotEmpty && !p.imageUrl.startsWith('assets/')) && local.imageUrl.startsWith('assets/')
+              amharicName: p.amharicName.isNotEmpty
+                  ? p.amharicName
+                  : local.amharicName,
+              imageUrl:
+                  (p.imageUrl.isNotEmpty &&
+                          !p.imageUrl.startsWith('assets/')) &&
+                      local.imageUrl.startsWith('assets/')
                   ? local.imageUrl
                   : (p.imageUrl.isNotEmpty ? p.imageUrl : local.imageUrl),
             );
@@ -319,6 +378,7 @@ class DataService {
 
   Future<void> setLastLeftoverCups(int cups) async {
     _lastLeftoverCups = cups;
+    await _saveToLocal();
   }
 
   List<Product> getProducts() => List.unmodifiable(_products);
@@ -348,11 +408,13 @@ class DataService {
     for (final debt in newDebts) {
       SupabaseService.instance.syncDebt(debt);
     }
+    _saveToLocal();
   }
 
   void recoverDebtCups(int cupsToRecover) {
     if (cupsToRecover <= 0) return;
     int remainingToRecover = cupsToRecover;
+    List<CustomerDebt> newRecoveredDebts = [];
     for (int i = 0; i < _debts.length; i++) {
       if (!_debts[i].isRecovered && remainingToRecover > 0) {
         final debt = _debts[i];
@@ -373,11 +435,16 @@ class DataService {
             amount: unrecoveredCount * debt.pricePerCup,
           );
           remainingToRecover = 0;
+          newRecoveredDebts.add(recoveredPart);
           SupabaseService.instance.syncDebt(recoveredPart);
           SupabaseService.instance.syncDebt(_debts[i]);
         }
       }
     }
+    if (newRecoveredDebts.isNotEmpty) {
+      _debts.addAll(newRecoveredDebts);
+    }
+    _saveToLocal();
   }
 
   List<Order> getOrders() => List.unmodifiable(_orders);
@@ -385,6 +452,7 @@ class DataService {
   void addOrder(Order order) {
     _orders.insert(0, order);
     SupabaseService.instance.syncOrder(order);
+    _saveToLocal();
   }
 
   void updateOrders(List<Order> updatedList) {
@@ -397,6 +465,7 @@ class DataService {
       }
       SupabaseService.instance.syncOrder(updated);
     }
+    _saveToLocal();
   }
 
   List<KitchenTicket> getKitchenTickets([String? route]) {
@@ -409,6 +478,7 @@ class DataService {
   void addKitchenTicket(KitchenTicket ticket) {
     _kitchenTickets.insert(0, ticket);
     SupabaseService.instance.syncKitchenTicket(ticket);
+    _saveToLocal();
   }
 
   List<ShiftExpense> _expenses = [];
@@ -420,43 +490,66 @@ class DataService {
 
   void deleteOrder(String orderId) {
     _orders.removeWhere((o) => o.id == orderId);
+    _saveToLocal();
   }
 
   void deleteDebt(String debtId) {
     _debts.removeWhere((d) => d.id == debtId);
+    _saveToLocal();
   }
 
   void toggleDebtRecovered(String debtId) {
     final idx = _debts.indexWhere((d) => d.id == debtId);
     if (idx >= 0) {
-      final updated = _debts[idx].copyWith(isRecovered: !_debts[idx].isRecovered);
+      final updated = _debts[idx].copyWith(
+        isRecovered: !_debts[idx].isRecovered,
+      );
       _debts[idx] = updated;
       SupabaseService.instance.syncDebt(updated);
     }
+    _saveToLocal();
   }
 
   void deleteKitchenTicket(String ticketId) {
     _kitchenTickets.removeWhere((t) => t.id == ticketId);
+    SupabaseService.instance.deleteKitchenTicket(ticketId);
+    _saveToLocal();
   }
 
   void clearKitchenTickets() {
     _kitchenTickets.clear();
+    SupabaseService.instance.clearAllKitchenTickets();
+    _saveToLocal();
+  }
+
+  void updateKitchenTicketStatus(String ticketId, String status) {
+    final idx = _kitchenTickets.indexWhere((t) => t.id == ticketId);
+    if (idx >= 0) {
+      _kitchenTickets[idx] = _kitchenTickets[idx].copyWith(status: status);
+      SupabaseService.instance.updateKitchenTicketStatus(ticketId, status);
+    }
+    _saveToLocal();
   }
 
   List<ShiftExpense> getExpenses() => List.unmodifiable(_expenses);
 
   void addExpense(ShiftExpense expense) {
     _expenses.insert(0, expense);
+    _saveToLocal();
   }
 
   void deleteExpense(String expenseId) {
     _expenses.removeWhere((e) => e.id == expenseId);
+    _saveToLocal();
   }
 
-  List<ShiftReconciliation> getReconciliations() => List.unmodifiable(_reconciliations);
+  List<ShiftReconciliation> getReconciliations() =>
+      List.unmodifiable(_reconciliations);
 
   void saveReconciliation(ShiftReconciliation recon) {
-    final idx = _reconciliations.indexWhere((r) => r.id == recon.id || r.shiftId == recon.shiftId);
+    final idx = _reconciliations.indexWhere(
+      (r) => r.id == recon.id || r.shiftId == recon.shiftId,
+    );
     if (idx >= 0) {
       _reconciliations[idx] = recon;
     } else {
@@ -472,9 +565,11 @@ class DataService {
     _expenses = [];
     _reconciliations = [];
     _lastLeftoverCups = 120;
+    _saveToLocal();
   }
 
   void clearSessionOrders() {
     _orders.clear();
+    _saveToLocal();
   }
 }

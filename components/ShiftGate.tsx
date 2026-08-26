@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ChevronRight, Sun, Moon, UtensilsCrossed, Settings } from 'lucide-react';
+import { ChevronRight, Sun, Moon, UtensilsCrossed, Settings, FileSpreadsheet } from 'lucide-react';
 import { ShiftType } from '../types/pos';
 import { isSupabaseConfigured } from '../lib/supabase';
 
@@ -9,9 +9,10 @@ interface ShiftGateProps {
   onSelectShift: (shift: ShiftType) => void;
   onSelectKitchen: () => void;
   onSelectAdmin: () => void;
+  onSelectManualRecon: () => void;
 }
 
-export function ShiftGate({ onSelectShift, onSelectKitchen, onSelectAdmin }: ShiftGateProps) {
+export function ShiftGate({ onSelectShift, onSelectKitchen, onSelectAdmin, onSelectManualRecon }: ShiftGateProps) {
   return (
     <main className="shift-gate">
       <div className="gate-orb orb-one" />
@@ -36,7 +37,7 @@ export function ShiftGate({ onSelectShift, onSelectKitchen, onSelectAdmin }: Shi
 
         <p className="eyebrow">እንኳን ደህና መጡ</p>
         <h1 className="font-extrabold text-gray-900">የስራ ቦታዎን ይምረጡ</h1>
-        <p className="gate-copy">አዲስ ሺፍት ለመጀመር ወይም የኩሽና ማዘዣዎችን ለመላክ ከታች ካሉት ይምረጡ።</p>
+        <p className="gate-copy">አዲስ ሺፍት ለመጀመር፣ የኩሽና ማዘዣዎችን ለመላክ ወይም በእጅ የሺፍት ሪፖርት ለመሙላት ይምረጡ።</p>
         
         <div className="workspace-choices mt-6">
           <button onClick={() => onSelectShift('day')}>
@@ -65,6 +66,25 @@ export function ShiftGate({ onSelectShift, onSelectKitchen, onSelectAdmin }: Shi
             </span>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
+
+          <button
+            onClick={onSelectManualRecon}
+            className="border-purple-200 bg-purple-50/40 hover:bg-purple-50 transition"
+          >
+            <span className="choice-icon" style={{ backgroundColor: '#f3e8ff', color: '#7e22ce' }}>
+              <FileSpreadsheet className="w-5 h-5 text-purple-700" />
+            </span>
+            <span>
+              <span className="flex items-center gap-2">
+                <strong className="text-base text-purple-950">በእጅ የሺፍት ሪፖርት መዝግብ (Manual Shift Entry)</strong>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-200 text-purple-800">
+                  Admin Only
+                </span>
+              </span>
+              <small className="text-xs text-purple-800/80">አፑ ባልተከፈተበት ቀን የተሟላ የሺፍት ቆጠራና ገቢ በእጅ ያስገቡ</small>
+            </span>
+            <ChevronRight className="w-5 h-5 text-purple-400" />
+          </button>
         </div>
 
         <div className="gate-footer border-t border-gray-100 pt-4 mt-8 flex justify-between text-xs text-gray-500">
@@ -72,9 +92,10 @@ export function ShiftGate({ onSelectShift, onSelectKitchen, onSelectAdmin }: Shi
             <span className="online-dot" />
             {isSupabaseConfigured ? 'ከ Supabase BaaS ጋር ተያይዟል' : 'ሎካል ሲስተም • Supabase ዝግጁ'}
           </div>
-          <span>ማራኪ POS v2.6</span>
+          <span>ማራኪ POS v3.0</span>
         </div>
       </section>
     </main>
   );
 }
+

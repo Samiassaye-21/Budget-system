@@ -33,10 +33,13 @@ class POSProvider extends ChangeNotifier {
   ShiftType? get shiftType => _shiftType;
   ShiftSession? get dayShiftSession => _dayShiftSession;
   ShiftSession? get nightShiftSession => _nightShiftSession;
-  bool get isDayShiftActive => _dayShiftSession != null && _dayShiftSession!.status == 'active';
-  bool get isNightShiftActive => _nightShiftSession != null && _nightShiftSession!.status == 'active';
+  bool get isDayShiftActive =>
+      _dayShiftSession != null && _dayShiftSession!.status == 'active';
+  bool get isNightShiftActive =>
+      _nightShiftSession != null && _nightShiftSession!.status == 'active';
 
-  ShiftSession? get shiftSession => _shiftType == ShiftType.night ? _nightShiftSession : _dayShiftSession;
+  ShiftSession? get shiftSession =>
+      _shiftType == ShiftType.night ? _nightShiftSession : _dayShiftSession;
   List<Product> get products => _products;
   List<CustomerDebt> get debts => _debts;
   List<Order> get orders => _orders;
@@ -59,8 +62,10 @@ class POSProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  int get totalPendingDebtCups => _debts.where((d) => !d.isRecovered).fold(0, (sum, d) => sum + d.cupCount);
-  double get totalPendingDebtAmount => _debts.where((d) => !d.isRecovered).fold(0.0, (sum, d) => sum + d.amount);
+  int get totalPendingDebtCups =>
+      _debts.where((d) => !d.isRecovered).fold(0, (sum, d) => sum + d.cupCount);
+  double get totalPendingDebtAmount =>
+      _debts.where((d) => !d.isRecovered).fold(0.0, (sum, d) => sum + d.amount);
 
   List<OrderItem> get currentCart => _currentCart;
   String get selectedPaymentMethod => _selectedPaymentMethod;
@@ -68,21 +73,27 @@ class POSProvider extends ChangeNotifier {
   String get selectedCategory => _selectedCategory;
   String get searchQuery => _searchQuery;
 
-  double get cartTotal => _currentCart.fold(0.0, (sum, i) => sum + (i.price * i.quantity));
-  int get cartJuiceCupsCount => _currentCart.fold(0, (sum, i) => sum + i.quantity);
+  double get cartTotal =>
+      _currentCart.fold(0.0, (sum, i) => sum + (i.price * i.quantity));
+  int get cartJuiceCupsCount =>
+      _currentCart.fold(0, (sum, i) => sum + i.quantity);
 
   // Unresolved Pay Later orders
   List<Order> get pendingPayLaterOrders =>
       _orders.where((o) => o.paymentMethod == 'Pay later').toList();
 
   bool isJuiceItem(OrderItem item) {
-    if (item.productId.startsWith('j-') || item.productId.startsWith('j_')) return true;
-    if (item.productId.startsWith('f-') || item.productId.startsWith('f_')) return false;
+    if (item.productId.startsWith('j-') || item.productId.startsWith('j_'))
+      return true;
+    if (item.productId.startsWith('f-') || item.productId.startsWith('f_'))
+      return false;
 
-    final matches = _products.where((p) =>
-        p.id == item.productId ||
-        p.name.toLowerCase() == item.name.toLowerCase() ||
-        p.amharicName == item.name);
+    final matches = _products.where(
+      (p) =>
+          p.id == item.productId ||
+          p.name.toLowerCase() == item.name.toLowerCase() ||
+          p.amharicName == item.name,
+    );
     if (matches.isNotEmpty) {
       final cat = matches.first.category.toLowerCase();
       return cat == 'juice' || cat == 'beverage' || cat == 'ትኩስ ጁሶች';
@@ -105,22 +116,81 @@ class POSProvider extends ChangeNotifier {
         !n.contains('ፉል');
   }
 
-  int get shiftJuiceCupsSold => _orders
-      .where((o) => o.shiftType == (_shiftType ?? ShiftType.day))
-      .fold(0, (sum, o) => sum + o.items.where(isJuiceItem).fold(0, (iSum, item) => iSum + item.quantity));
+  int get shiftJuiceCupsSold {
+    if (_shiftType == null || shiftSession == null) return 0;
+    return _orders
+        .where(
+          (o) =>
+              o.shiftType == _shiftType &&
+              o.createdAt.isAfter(
+                shiftSession!.startedAt.subtract(const Duration(seconds: 1)),
+              ),
+        )
+        .fold(
+          0,
+          (sum, o) =>
+              sum +
+              o.items
+                  .where(isJuiceItem)
+                  .fold(0, (iSum, item) => iSum + item.quantity),
+        );
+  }
 
-  int get shiftFoodSold => _orders
-      .where((o) => o.shiftType == (_shiftType ?? ShiftType.day))
-      .fold(0, (sum, o) => sum + o.items.where((i) => !isJuiceItem(i)).fold(0, (iSum, item) => iSum + item.quantity));
+  int get shiftFoodSold {
+    if (_shiftType == null || shiftSession == null) return 0;
+    return _orders
+        .where(
+          (o) =>
+              o.shiftType == _shiftType &&
+              o.createdAt.isAfter(
+                shiftSession!.startedAt.subtract(const Duration(seconds: 1)),
+              ),
+        )
+        .fold(
+          0,
+          (sum, o) =>
+              sum +
+              o.items
+                  .where((i) => !isJuiceItem(i))
+                  .fold(0, (iSum, item) => iSum + item.quantity),
+        );
+  }
 
   List<KitchenTicket> get shiftKitchenTickets {
-    final routeName = _shiftType == ShiftType.night ? 'Night shift' : 'Day shift';
-    return _kitchenTickets.where((t) => t.route == routeName || t.route == 'BeU delivery' || t.route == 'Bue delivery').toList();
+    if (shiftSession == null) return [];
+    final routeName = _shiftType == ShiftType.night
+        ? 'Night shift'
+        : 'Day shift';
+    return _kitchenTickets
+        .where(
+          (t) =>
+              (t.route == routeName ||
+                  t.route == 'BeU delivery' ||
+                  t.route == 'Bue delivery') &&
+              t.createdAt.isAfter(
+                shiftSession!.startedAt.subtract(const Duration(seconds: 1)),
+              ),
+        )
+        .toList();
   }
 
   List<KitchenTicket> get pendingShiftKitchenTickets {
-    final routeName = _shiftType == ShiftType.night ? 'Night shift' : 'Day shift';
-    return _kitchenTickets.where((t) => (t.route == routeName || t.route == 'BeU delivery' || t.route == 'Bue delivery') && t.status == 'pending').toList();
+    if (shiftSession == null) return [];
+    final routeName = _shiftType == ShiftType.night
+        ? 'Night shift'
+        : 'Day shift';
+    return _kitchenTickets
+        .where(
+          (t) =>
+              (t.route == routeName ||
+                  t.route == 'BeU delivery' ||
+                  t.route == 'Bue delivery') &&
+              t.status == 'pending' &&
+              t.createdAt.isAfter(
+                shiftSession!.startedAt.subtract(const Duration(seconds: 1)),
+              ),
+        )
+        .toList();
   }
 
   int get kitchenFoodCookedForShift =>
@@ -153,6 +223,8 @@ class POSProvider extends ChangeNotifier {
     });
   }
 
+  final Set<String> _deletedOrAcceptedTicketIds = {};
+
   Future<void> syncAllFromCloud() async {
     final isOnline = await SupabaseService.instance.checkConnection();
     if (isOnline) {
@@ -161,9 +233,15 @@ class POSProvider extends ChangeNotifier {
       // 1. Fetch newest kitchen tickets from cloud
       final cloudTickets = await SupabaseService.instance.fetchKitchenTickets();
       if (cloudTickets.isNotEmpty) {
-        final existingIds = {for (var t in _kitchenTickets) t.id};
+        final existingMap = {for (var t in _kitchenTickets) t.id: t};
         for (final ct in cloudTickets) {
-          if (!existingIds.contains(ct.id)) {
+          if (_deletedOrAcceptedTicketIds.contains(ct.id)) {
+            continue;
+          }
+          if (ct.status != 'pending') {
+            continue;
+          }
+          if (!existingMap.containsKey(ct.id)) {
             _kitchenTickets.insert(0, ct);
             _dataService.addKitchenTicket(ct);
             changed = true;
@@ -205,6 +283,7 @@ class POSProvider extends ChangeNotifier {
   }
 
   void addKitchenTicket(KitchenTicket ticket) {
+    _deletedOrAcceptedTicketIds.remove(ticket.id);
     _kitchenTickets.insert(0, ticket);
     _dataService.addKitchenTicket(ticket);
     notifyListeners();
@@ -237,7 +316,9 @@ class POSProvider extends ChangeNotifier {
 
   void selectShift(ShiftType chosenShift) {
     _shiftType = chosenShift;
-    final activeSession = chosenShift == ShiftType.night ? _nightShiftSession : _dayShiftSession;
+    final activeSession = chosenShift == ShiftType.night
+        ? _nightShiftSession
+        : _dayShiftSession;
     if (activeSession != null && activeSession.status == 'active') {
       _mode = AppMode.pos;
     } else {
@@ -267,7 +348,9 @@ class POSProvider extends ChangeNotifier {
   }
 
   void addToCart(Product product, {int quantity = 1, String? notes}) {
-    final itemName = product.amharicName.isNotEmpty ? product.amharicName : product.name;
+    final itemName = product.amharicName.isNotEmpty
+        ? product.amharicName
+        : product.name;
     final idx = _currentCart.indexWhere((item) => item.productId == product.id);
     if (idx >= 0) {
       final existing = _currentCart[idx];
@@ -335,12 +418,18 @@ class POSProvider extends ChangeNotifier {
     _dataService.addOrder(order);
 
     if (_selectedPaymentMethod == 'Credit') {
-      final juiceCount = _currentCart.where(isJuiceItem).fold(0, (sum, i) => sum + i.quantity);
+      final juiceCount = _currentCart
+          .where(isJuiceItem)
+          .fold(0, (sum, i) => sum + i.quantity);
       final debt = CustomerDebt(
         id: 'deb-${_uuid.v4().substring(0, 6)}',
-        customerName: _orderNotes.isNotEmpty ? _orderNotes : 'የአዳሪ ደንበኛ (Adari Customer)',
+        customerName: _orderNotes.isNotEmpty
+            ? _orderNotes
+            : 'የአዳሪ ደንበኛ (Adari Customer)',
         note: 'የትዕዛዝ #${order.id.substring(order.id.length - 4)} አዳሪ',
-        cupCount: juiceCount > 0 ? juiceCount : _currentCart.fold(0, (sum, i) => sum + i.quantity),
+        cupCount: juiceCount > 0
+            ? juiceCount
+            : _currentCart.fold(0, (sum, i) => sum + i.quantity),
         pricePerCup: 170.0,
         amount: cartTotal,
         isRecovered: false,
@@ -351,7 +440,10 @@ class POSProvider extends ChangeNotifier {
       _dataService.addDebts([debt]);
     }
 
-    final remaining = (currentSession.openingCups - shiftJuiceCupsSold).clamp(0, 99999);
+    final remaining = (currentSession.openingCups - shiftJuiceCupsSold).clamp(
+      0,
+      99999,
+    );
     _dataService.setLastLeftoverCups(remaining);
     _currentCart.clear();
     _orderNotes = '';
@@ -359,7 +451,10 @@ class POSProvider extends ChangeNotifier {
     return true;
   }
 
-  void confirmPayLaterResolutions(List<Order> updatedList, List<CustomerDebt> newDebts) {
+  void confirmPayLaterResolutions(
+    List<Order> updatedList,
+    List<CustomerDebt> newDebts,
+  ) {
     for (final updated in updatedList) {
       final idx = _orders.indexWhere((o) => o.id == updated.id);
       if (idx >= 0) {
@@ -376,14 +471,19 @@ class POSProvider extends ChangeNotifier {
   }
 
   void markKitchenTicketAccepted(String ticketId) {
+    _deletedOrAcceptedTicketIds.add(ticketId);
     final idx = _kitchenTickets.indexWhere((t) => t.id == ticketId);
     if (idx >= 0) {
       _kitchenTickets[idx] = _kitchenTickets[idx].copyWith(status: 'accepted');
+      _dataService.updateKitchenTicketStatus(ticketId, 'accepted');
       notifyListeners();
     }
   }
 
-  void importKitchenTicketToOrder(KitchenTicket ticket, {String paymentMethod = 'Cash'}) {
+  void importKitchenTicketToOrder(
+    KitchenTicket ticket, {
+    String paymentMethod = 'Cash',
+  }) {
     final order = Order(
       id: 'ord-${_uuid.v4().substring(0, 6)}',
       items: List.from(ticket.items),
@@ -402,7 +502,9 @@ class POSProvider extends ChangeNotifier {
 
   void addItemsToCart(List<OrderItem> items) {
     for (final item in items) {
-      final idx = _currentCart.indexWhere((c) => c.productId == item.productId || c.name == item.name);
+      final idx = _currentCart.indexWhere(
+        (c) => c.productId == item.productId || c.name == item.name,
+      );
       if (idx >= 0) {
         final cur = _currentCart[idx];
         _currentCart[idx] = OrderItem(
@@ -421,12 +523,18 @@ class POSProvider extends ChangeNotifier {
   Future<void> completeReconciliation(ShiftReconciliation recon) async {
     _reconciliations.insert(0, recon);
     await _dataService.setLastLeftoverCups(recon.leftoverCups);
-    
+
     // Automatically deduct and persist recovered Adari (debts)
     if (recon.totalRecoveredCups > 0) {
       _dataService.recoverDebtCups(recon.totalRecoveredCups);
       _debts = List.from(_dataService.getCustomerDebts());
     }
+
+    // Persist all expenses created during this shift reconciliation
+    for (final expense in recon.expenses) {
+      _dataService.addExpense(expense);
+    }
+    _expenses = List.from(_dataService.getExpenses());
 
     SupabaseService.instance.syncShiftReconciliation(recon);
     if (recon.shiftType == ShiftType.day) {
@@ -482,12 +590,14 @@ class POSProvider extends ChangeNotifier {
   }
 
   void deleteKitchenTicket(String ticketId) {
+    _deletedOrAcceptedTicketIds.add(ticketId);
     _dataService.deleteKitchenTicket(ticketId);
     _kitchenTickets = List.from(_dataService.getKitchenTickets());
     notifyListeners();
   }
 
   void clearKitchenTickets() {
+    _deletedOrAcceptedTicketIds.addAll(_kitchenTickets.map((t) => t.id));
     _dataService.clearKitchenTickets();
     _kitchenTickets.clear();
     notifyListeners();

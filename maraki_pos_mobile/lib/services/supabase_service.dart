@@ -239,6 +239,57 @@ class SupabaseService {
     return [];
   }
 
+  /// Updates status of kitchen ticket in cloud (e.g. 'accepted' or 'completed')
+  Future<void> updateKitchenTicketStatus(String ticketId, String status) async {
+    if (!_isConfigured) return;
+    try {
+      await http.patch(
+        Uri.parse('$_supabaseUrl/rest/v1/kitchen_tickets?id=eq.$ticketId'),
+        headers: {
+          'apikey': _anonKey,
+          'Authorization': 'Bearer $_anonKey',
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: json.encode({'status': status}),
+      ).timeout(const Duration(seconds: 4));
+    } catch (e) {
+      debugPrint('Error updating kitchen ticket status in cloud: $e');
+    }
+  }
+
+  /// Deletes a kitchen ticket from Supabase cloud database
+  Future<void> deleteKitchenTicket(String ticketId) async {
+    if (!_isConfigured) return;
+    try {
+      await http.delete(
+        Uri.parse('$_supabaseUrl/rest/v1/kitchen_tickets?id=eq.$ticketId'),
+        headers: {
+          'apikey': _anonKey,
+          'Authorization': 'Bearer $_anonKey',
+        },
+      ).timeout(const Duration(seconds: 4));
+    } catch (e) {
+      debugPrint('Error deleting kitchen ticket from cloud: $e');
+    }
+  }
+
+  /// Clears all kitchen tickets from Supabase cloud database
+  Future<void> clearAllKitchenTickets() async {
+    if (!_isConfigured) return;
+    try {
+      await http.delete(
+        Uri.parse('$_supabaseUrl/rest/v1/kitchen_tickets?id=neq.none'),
+        headers: {
+          'apikey': _anonKey,
+          'Authorization': 'Bearer $_anonKey',
+        },
+      ).timeout(const Duration(seconds: 4));
+    } catch (e) {
+      debugPrint('Error clearing kitchen tickets from cloud: $e');
+    }
+  }
+
   /// Syncs customer debt
   Future<void> syncDebt(CustomerDebt debt) async {
     final payload = {
@@ -301,7 +352,7 @@ class SupabaseService {
             pricePerCup: (map['price_per_cup'] as num?)?.toDouble() ?? 170.0,
             amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
             isRecovered: map['is_recovered'] ?? false,
-            shiftIdCreated: map['shift_id_created'],
+            shiftIdCreated: map['shift_id_created'] ?? '',
             createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
           );
         }).toList();

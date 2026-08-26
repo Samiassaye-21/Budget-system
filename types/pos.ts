@@ -1,5 +1,5 @@
 export type ShiftType = 'day' | 'night';
-export type AppMode = 'gate' | 'cups' | 'pos' | 'kitchen' | 'admin';
+export type AppMode = 'gate' | 'cups' | 'pos' | 'kitchen' | 'admin' | 'manual-recon';
 export type KitchenRoute = 'Day shift' | 'Night shift' | 'Bue delivery';
 
 export type ProductCategory = 'Food' | 'Juice' | 'Beverage';
@@ -86,6 +86,49 @@ export interface FoodItemReconciliation {
   variance: number;
 }
 
+export interface TransferRecord {
+  id: string;
+  senderName: string;
+  amount: number;
+  note: string;
+}
+
+export interface FoodBoxEntry {
+  name: string;
+  emoji: string;
+  opening: number;
+  leftover: number;
+  consumed: number; // auto: opening - leftover
+  kitchenCooked: number; // from kitchen lookup (0 if not found)
+}
+
+export interface FoodSoldEntry {
+  name: string;
+  emoji: string;
+  sold: number;
+  kitchenCooked: number;
+  variance: number; // auto: sold - kitchenCooked
+}
+
+export interface JuiceEntry {
+  name: string;
+  emoji: string;
+  sold: number;
+}
+
+export interface ManualPendingPayment {
+  id: string;
+  customerName: string;
+  amount: number;
+  note: string;
+}
+
+export interface ManualRecoveredPayment {
+  debtId: string;
+  customerName: string;
+  amount: number;
+}
+
 export interface ShiftReconciliation {
   id: string;
   shiftId: string;
@@ -127,4 +170,69 @@ export interface ShiftReconciliation {
   netCashToOwner: number;
   shiftNotes: string;
   closedAt: string;
+
+  // Extended manual entries fields (optional on auto, populated on manual)
+  entryMode?: 'auto' | 'manual';
+  shiftDate?: string;
+  juiceBreakdown?: JuiceEntry[];
+  foodBoxInventory?: FoodBoxEntry[];
+  foodSoldBreakdown?: FoodSoldEntry[];
+  kitchenDataFound?: boolean;
 }
+
+export interface ManualShiftReconciliation extends ShiftReconciliation {
+  entryMode: 'manual';
+  shiftDate: string; // ISO date string 'YYYY-MM-DD'
+  juiceBreakdown: JuiceEntry[];
+  foodBoxInventory: FoodBoxEntry[];
+  foodSoldBreakdown: FoodSoldEntry[];
+  transferRecords: TransferRecord[];
+  pendingPayments: ManualPendingPayment[];
+  recoveredPayments: ManualRecoveredPayment[];
+  kitchenDataFound: boolean;
+}
+
+export interface DeliveryRecord {
+  id: string;
+  partnerName: string; // e.g. 'BeU Delivery', 'Direct Rider - Abebe'
+  orderCount: number;
+  amount: number;
+  isSettled: boolean;
+  shiftType: ShiftType;
+  shiftId?: string;
+  date: string;
+  settledAt?: string;
+  notes?: string;
+}
+
+export interface InventoryPurchase {
+  id: string;
+  itemName: string;
+  category: string; // 'Fruits', 'Dairy', 'Packaging', 'Groceries', 'General'
+  quantity: number;
+  unit: string; // 'kg', 'crate', 'box', 'piece', 'liter'
+  unitPrice: number;
+  totalCost: number;
+  date: string;
+  purchasedBy?: string;
+  notes?: string;
+}
+
+export interface GeneralExpense {
+  id: string;
+  category: string; // 'Rent', 'Utilities', 'Staff Wages', 'Repairs & Maintenance', 'Transport', 'Taxes & Licenses', 'Other'
+  description: string;
+  amount: number;
+  date: string;
+  receiptNumber?: string;
+  paidFrom?: 'Cash' | 'Bank / Telebirr';
+}
+
+export interface SystemConfig {
+  dayShiftWorkerName: string;
+  nightShiftWorkerName: string;
+  juiceUnitPrice: number;
+  currency: string;
+}
+
+
