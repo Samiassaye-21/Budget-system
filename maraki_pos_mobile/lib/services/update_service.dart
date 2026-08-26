@@ -96,6 +96,7 @@ class UpdateService {
     String apkUrl, {
     required void Function(int progress) onProgress,
     required void Function(String error) onError,
+    void Function(int receivedBytes)? onBytesReceived,
   }) async {
     try {
       // 1. Verify Permission BEFORE download
@@ -115,6 +116,7 @@ class UpdateService {
       }
 
       // 3. Download APK with Stream progress
+      //    Use http.Client with redirects (GitHub releases return 302→CDN)
       final client = http.Client();
       final request = http.Request('GET', Uri.parse(apkUrl))
         ..followRedirects = true
@@ -133,6 +135,8 @@ class UpdateService {
       await response.stream.listen((chunk) {
         sink.add(chunk);
         receivedBytes += chunk.length;
+        // Always report raw bytes so UI can show MB even without Content-Length
+        onBytesReceived?.call(receivedBytes);
         if (totalBytes > 0) {
           final progress = ((receivedBytes / totalBytes) * 100).toInt();
           onProgress(progress.clamp(0, 100));

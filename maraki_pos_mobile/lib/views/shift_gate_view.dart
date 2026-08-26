@@ -26,6 +26,7 @@ class _ShiftGateViewState extends State<ShiftGateView> {
   AppUpdateInfo? _updateInfo;
   bool _isDownloading = false;
   int _downloadProgress = 0;
+  int _downloadedBytes = 0;
   GateShowcaseItem _activeItem = GateShowcaseItem.dayShift;
 
   @override
@@ -52,7 +53,19 @@ class _ShiftGateViewState extends State<ShiftGateView> {
     setState(() {
       _isDownloading = true;
       _downloadProgress = 0;
+      _downloadedBytes = 0;
     });
+
+    // Show immediate snackbar so user knows something is happening
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⏳ ማውረድ እየተጀመረ ነው…'),
+          backgroundColor: Color(0xFF1B5E20),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
 
     final success = await UpdateService.downloadAndInstallApk(
       apkUrl,
@@ -63,15 +76,25 @@ class _ShiftGateViewState extends State<ShiftGateView> {
           });
         }
       },
+      onBytesReceived: (received) {
+        if (mounted) {
+          setState(() {
+            _downloadedBytes = received;
+          });
+        }
+      },
       onError: (errMsg) {
         if (mounted) {
           setState(() {
             _isDownloading = false;
+            _downloadProgress = 0;
+            _downloadedBytes = 0;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('የማዘመን ስህተት፡ $errMsg'),
-              backgroundColor: AppColors.obsidian,
+              content: Text('❌ የማዘመን ስህተት፡ $errMsg'),
+              backgroundColor: Colors.red.shade800,
+              duration: const Duration(seconds: 6),
             ),
           );
         }
@@ -81,6 +104,8 @@ class _ShiftGateViewState extends State<ShiftGateView> {
     if (!success && mounted) {
       setState(() {
         _isDownloading = false;
+        _downloadProgress = 0;
+        _downloadedBytes = 0;
       });
     }
   }
@@ -287,31 +312,91 @@ class _ShiftGateViewState extends State<ShiftGateView> {
                       if (_updateInfo != null && _updateInfo!.hasUpdate) ...[
                         Container(
                           margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.primarySoft,
+                            color: _isDownloading ? const Color(0xFF1B5E20) : AppColors.primarySoft,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: _isDownloading
+                                  ? Colors.green.shade400
+                                  : AppColors.primary.withValues(alpha: 0.3),
+                            ),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.system_update_alt_rounded, color: AppColors.primary, size: 18),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'አዲስ ስሪት ተገኝቷል (v${_updateInfo!.latestVersion}): ${_updateInfo!.releaseNotes}',
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.obsidian),
+                              Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    _isDownloading
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            ),
+                                          )
+                                        : const Icon(Icons.system_update_alt_rounded, color: AppColors.primary, size: 18),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _isDownloading
+                                          ? Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  _downloadProgress > 0
+                                                      ? 'እየተወረደ ነው… $_downloadProgress%'
+                                                      : _downloadedBytes > 0
+                                                          ? 'እየተወረደ ነው… ${(_downloadedBytes / 1024 / 1024).toStringAsFixed(1)} MB'
+                                                          : 'ማዝሙር ማስጀመሪያ ደርሷል ⏳',
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ],
+                                            )
+                                          : Text(
+                                              'አዲስ ስሪት ተገኝቷል (v${_updateInfo!.latestVersion})',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.obsidian,
+                                              ),
+                                            ),
+                                    ),
+                                    if (!_isDownloading)
+                                      ElevatedButton(
+                                        onPressed: () => _executeOtaDownload(_updateInfo!.apkUrl),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                        child: const Text('አዘምን', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                      ),
+                                  ],
                                 ),
                               ),
-                              ElevatedButton(
-                                onPressed: () => _executeOtaDownload(_updateInfo!.apkUrl),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              if (_isDownloading) ...[
+                                ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
+                                  child: _downloadProgress > 0
+                                      ? LinearProgressIndicator(
+                                          value: _downloadProgress / 100,
+                                          minHeight: 5,
+                                          backgroundColor: Colors.green.shade900,
+                                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                                        )
+                                      : const LinearProgressIndicator(
+                                          minHeight: 5,
+                                          backgroundColor: Color(0xFF1B5E20),
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                                        ),
                                 ),
-                                child: const Text('አዘምን', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                              ),
+                              ],
                             ],
                           ),
                         ),
