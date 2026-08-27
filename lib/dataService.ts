@@ -37,12 +37,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   { id: 'j-9', name: 'Watermelon Juice (ሐብሐብ ጁስ)', description: 'Cold fresh watermelon juice', price: 170, category: 'Juice', tone: 'mango', emoji: '🍉', image: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&w=600&q=80', isAvailable: true },
 ];
 
-// CUP-BASED CUSTOMER CREDIT DEBTS (Price per cup: 170 ETB)
-export const INITIAL_DEBTS: CustomerDebt[] = [
-  { id: 'deb-1', customerName: 'አበበ ቢቂላ (Abebe Bikila)', note: 'የትላንትና የቢሮ ጁስ አዳሪ (Adari)', cupCount: 5, pricePerCup: 170, amount: 850, isRecovered: false, shiftIdCreated: 'prev-shift-1', createdAt: new Date(Date.now() - 86400000).toISOString() },
-  { id: 'deb-2', customerName: 'ትዕግስት ኃይሌ (Tigist Haile)', note: 'የምሳ ጁስ ማዘዣ አዳሪ (Adari)', cupCount: 3, pricePerCup: 170, amount: 510, isRecovered: false, shiftIdCreated: 'prev-shift-2', createdAt: new Date(Date.now() - 172800000).toISOString() },
-  { id: 'deb-3', customerName: 'ከበደ ታሰሰ (Kebede Tassew)', note: 'የካፌ ዴሊቨሪ ጁስ አዳሪ (Adari)', cupCount: 8, pricePerCup: 170, amount: 1360, isRecovered: false, shiftIdCreated: 'prev-shift-3', createdAt: new Date(Date.now() - 259200000).toISOString() },
-];
+// CUP-BASED CUSTOMER CREDIT DEBTS (Initial empty pool)
+export const INITIAL_DEBTS: CustomerDebt[] = [];
 
 class DataService {
   private products: Product[] = INITIAL_PRODUCTS;
