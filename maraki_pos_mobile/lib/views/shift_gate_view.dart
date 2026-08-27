@@ -27,6 +27,7 @@ class _ShiftGateViewState extends State<ShiftGateView> {
   bool _isDownloading = false;
   int _downloadProgress = 0;
   int _downloadedBytes = 0;
+  String _downloadStatusMessage = '';
   GateShowcaseItem _activeItem = GateShowcaseItem.dayShift;
 
   @override
@@ -54,6 +55,7 @@ class _ShiftGateViewState extends State<ShiftGateView> {
       _isDownloading = true;
       _downloadProgress = 0;
       _downloadedBytes = 0;
+      _downloadStatusMessage = 'የአዲሱን ስሪት ፋይል በማውረድ ላይ...';
     });
 
     // Show immediate snackbar so user knows something is happening
@@ -73,6 +75,7 @@ class _ShiftGateViewState extends State<ShiftGateView> {
         if (mounted) {
           setState(() {
             _downloadProgress = progress;
+            _downloadStatusMessage = 'በማውረድ ላይ: $progress%';
           });
         }
       },
@@ -83,12 +86,20 @@ class _ShiftGateViewState extends State<ShiftGateView> {
           });
         }
       },
+      onStatusChanged: (status) {
+        if (mounted) {
+          setState(() {
+            _downloadStatusMessage = status;
+          });
+        }
+      },
       onError: (errMsg) {
         if (mounted) {
           setState(() {
             _isDownloading = false;
             _downloadProgress = 0;
             _downloadedBytes = 0;
+            _downloadStatusMessage = '';
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -106,6 +117,7 @@ class _ShiftGateViewState extends State<ShiftGateView> {
         _isDownloading = false;
         _downloadProgress = 0;
         _downloadedBytes = 0;
+        _downloadStatusMessage = '';
       });
     }
   }
@@ -345,17 +357,25 @@ class _ShiftGateViewState extends State<ShiftGateView> {
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  _downloadProgress > 0
-                                                      ? 'እየተወረደ ነው… $_downloadProgress%'
-                                                      : _downloadedBytes > 0
-                                                          ? 'እየተወረደ ነው… ${(_downloadedBytes / 1024 / 1024).toStringAsFixed(1)} MB'
-                                                          : 'ማዝሙር ማስጀመሪያ ደርሷል ⏳',
+                                                  _downloadStatusMessage.isNotEmpty
+                                                      ? _downloadStatusMessage
+                                                      : (_downloadProgress > 0
+                                                          ? 'እየተወረደ ነው… $_downloadProgress%'
+                                                          : 'ማውረጃውን በማዘጋጀት ላይ ⏳'),
                                                   style: const TextStyle(
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.white,
                                                   ),
                                                 ),
+                                                if (_downloadedBytes > 0)
+                                                  Text(
+                                                    '${(_downloadedBytes / 1024 / 1024).toStringAsFixed(1)} MB ወርዷል',
+                                                    style: TextStyle(
+                                                      fontSize: 9.5,
+                                                      color: Colors.white.withValues(alpha: 0.85),
+                                                    ),
+                                                  ),
                                               ],
                                             )
                                           : Text(

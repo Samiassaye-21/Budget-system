@@ -1199,6 +1199,13 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
           });
         }
       },
+      onStatusChanged: (status) {
+        if (mounted) {
+          setState(() {
+            _updateStatusMessage = status;
+          });
+        }
+      },
       onError: (err) {
         if (mounted) {
           setState(() {
