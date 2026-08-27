@@ -8,11 +8,13 @@ import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/cloud_sync_dialog.dart';
 import '../widgets/pin_pad_dialog.dart';
+import 'shift_reconciliation_view.dart';
 
 enum GateShowcaseItem {
   kitchen,
   dayShift,
   nightShift,
+  reconciliation,
 }
 
 class ShiftGateView extends StatefulWidget {
@@ -457,46 +459,77 @@ class _ShiftGateViewState extends State<ShiftGateView> {
                       const Divider(height: 1, color: Color(0xFFE2E8F0)),
                       const SizedBox(height: 14),
 
-                      // Bottom Row: Admin Button on Bottom-Left, Motto on Bottom-Right
+                      // Bottom Row: Admin Button, Reconciliation Button & Brand Motto
                       Wrap(
                         alignment: WrapAlignment.spaceBetween,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         spacing: 12,
                         runSpacing: 10,
                         children: [
-                          // Bottom-Left Admin Button
-                          InkWell(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => PinPadDialog(
-                                  title: 'የአድሚን ዳሽቦርድ መግቢያ',
-                                  subtitle: 'የአድሚን PIN ያስገቡ (ነባሪ PIN: ${pos.adminPin})',
-                                  requiredPin: pos.adminPin,
-                                  onConfirm: (pin) => pos.setMode(AppMode.admin),
-                                ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Bottom-Left Reconciliation Quick Action Button
+                              InkWell(
+                                onTap: () => _showReconciliationShiftPicker(context, pos),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.admin_panel_settings_rounded, size: 16, color: AppColors.primary),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'አድሚን ዳሽቦርድ (PIN)',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.obsidian),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
                                   ),
-                                ],
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.receipt_long_rounded, size: 16, color: Color(0xFFB45309)),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'የፈረቃ ማጠቃለያ (Reconcile)',
+                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 8),
+
+                              // Bottom-Left Admin Button
+                              InkWell(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => PinPadDialog(
+                                      title: 'የአድሚን ዳሽቦርድ መግቢያ',
+                                      subtitle: 'የአድሚን PIN ያስገቡ (ነባሪ PIN: ${pos.adminPin})',
+                                      requiredPin: pos.adminPin,
+                                      onConfirm: (pin) => pos.setMode(AppMode.admin),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.admin_panel_settings_rounded, size: 16, color: AppColors.primary),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'አድሚን (PIN)',
+                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.obsidian),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
 
                           // Bottom-Right Brand Motto
@@ -536,20 +569,97 @@ class _ShiftGateViewState extends State<ShiftGateView> {
     );
   }
 
-  // Interactive 3-Card Carousel Builder
+  void _showReconciliationShiftPicker(BuildContext context, POSProvider pos) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.receipt_long_rounded, color: AppColors.primary),
+                ),
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'የፈረቃ ሂሳብ ማጠቃለያ ይምረጡ',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.obsidian),
+                    ),
+                    Text(
+                      'Manual Shift Reconciliation Wizard',
+                      style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFFEF3C7),
+                child: Icon(Icons.wb_sunny_rounded, color: Color(0xFFD97706)),
+              ),
+              title: const Text('የቀን ሺፍት ማጠቃለያ (Day Shift)', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(DateHelper.dayShiftHours, style: const TextStyle(fontSize: 11)),
+              trailing: const Icon(Icons.chevron_right),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.shade200)),
+              onTap: () {
+                Navigator.pop(ctx);
+                showDialog(
+                  context: context,
+                  builder: (_) => const ShiftReconciliationView(targetShiftType: ShiftType.day),
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFEDE9FE),
+                child: Icon(Icons.nightlight_round, color: Color(0xFF7C3AED)),
+              ),
+              title: const Text('የማታ ሺፍት ማጠቃለያ (Night Shift)', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(DateHelper.nightShiftHours, style: const TextStyle(fontSize: 11)),
+              trailing: const Icon(Icons.chevron_right),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.shade200)),
+              onTap: () {
+                Navigator.pop(ctx);
+                showDialog(
+                  context: context,
+                  builder: (_) => const ShiftReconciliationView(targetShiftType: ShiftType.night),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Interactive 4-Card Carousel Builder
   Widget _buildInteractiveShowcase(POSProvider pos, bool isDayActive, bool isNightActive, bool isNarrow) {
-    // Dynamic order: whichever card is active will be placed in the center!
     final List<GateShowcaseItem> orderedItems = [
       GateShowcaseItem.kitchen,
       GateShowcaseItem.dayShift,
       GateShowcaseItem.nightShift,
+      GateShowcaseItem.reconciliation,
     ];
-
-    // Rearrange so the active item is in the middle on wide screens
-    if (!isNarrow) {
-      orderedItems.remove(_activeItem);
-      orderedItems.insert(1, _activeItem); // Place active in middle index 1
-    }
 
     if (isNarrow) {
       return Column(
@@ -569,42 +679,24 @@ class _ShiftGateViewState extends State<ShiftGateView> {
       );
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          flex: orderedItems[0] == _activeItem ? 4 : 3,
-          child: _buildShowcaseCard(
-            item: orderedItems[0],
-            isHighlighted: orderedItems[0] == _activeItem,
-            pos: pos,
-            isDayActive: isDayActive,
-            isNightActive: isNightActive,
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          flex: orderedItems[1] == _activeItem ? 4 : 3,
-          child: _buildShowcaseCard(
-            item: orderedItems[1],
-            isHighlighted: orderedItems[1] == _activeItem,
-            pos: pos,
-            isDayActive: isDayActive,
-            isNightActive: isNightActive,
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          flex: orderedItems[2] == _activeItem ? 4 : 3,
-          child: _buildShowcaseCard(
-            item: orderedItems[2],
-            isHighlighted: orderedItems[2] == _activeItem,
-            pos: pos,
-            isDayActive: isDayActive,
-            isNightActive: isNightActive,
-          ),
-        ),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: orderedItems.map((item) {
+          return Container(
+            width: 260,
+            margin: const EdgeInsets.only(right: 14),
+            child: _buildShowcaseCard(
+              item: item,
+              isHighlighted: item == _activeItem,
+              pos: pos,
+              isDayActive: isDayActive,
+              isNightActive: isNightActive,
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -651,6 +743,15 @@ class _ShiftGateViewState extends State<ShiftGateView> {
         status = isNightActive ? '🟢 ንቁ (Active)' : 'ዝግጁ (Ready)';
         buttonText = isNightActive ? 'ሺፍቱን ቀጥል (RESUME)' : 'ሺፍት ጀምር (START)';
         onAction = () => pos.selectShift(ShiftType.night);
+        break;
+      case GateShowcaseItem.reconciliation:
+        title = 'የፈረቃ ማጠቃለያ';
+        subtitle = 'Shift Reconciliation';
+        icon = Icons.receipt_long_rounded;
+        hours = 'የቀንና የማታ ሂሳብ';
+        status = '📊 ዝግጁ (Reconcile)';
+        buttonText = 'ሂሳብ አጠቃልል (START)';
+        onAction = () => _showReconciliationShiftPicker(context, pos);
         break;
     }
 

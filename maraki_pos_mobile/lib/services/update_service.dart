@@ -27,7 +27,7 @@ class AppUpdateInfo {
 
 class UpdateService {
   static const String currentAppVersion = '2.7.0';
-  static const int currentBuildNumber = 9;
+  static const int currentBuildNumber = 10;
   static const String androidAppId = 'com.marakipos.maraki_pos_mobile';
 
   // Remote Manifest Endpoint

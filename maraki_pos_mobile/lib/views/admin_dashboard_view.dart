@@ -9,6 +9,7 @@ import '../services/supabase_service.dart';
 import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/file_exporter.dart';
+import 'shift_reconciliation_view.dart';
 
 class AdminDashboardView extends StatefulWidget {
   const AdminDashboardView({super.key});
@@ -3330,10 +3331,31 @@ class _AdminDashboardViewState extends State<AdminDashboardView>
                   color: AppColors.textPrimary,
                 ),
               ),
-              _buildDateDropdown(
-                value: _shiftHistoryDateFilter,
-                onChanged: (v) =>
-                    setState(() => _shiftHistoryDateFilter = v ?? 'All'),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => const ShiftReconciliationView(),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    icon: const Icon(Icons.add_circle_outline, size: 14),
+                    label: const Text('አዲስ ማጠቃለያ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildDateDropdown(
+                    value: _shiftHistoryDateFilter,
+                    onChanged: (v) =>
+                        setState(() => _shiftHistoryDateFilter = v ?? 'All'),
+                  ),
+                ],
               ),
             ],
           ),

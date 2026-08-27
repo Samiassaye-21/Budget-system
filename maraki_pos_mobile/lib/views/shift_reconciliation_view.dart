@@ -8,7 +8,8 @@ import '../theme/app_theme.dart';
 import '../widgets/pin_pad_dialog.dart';
 
 class ShiftReconciliationView extends StatefulWidget {
-  const ShiftReconciliationView({super.key});
+  final ShiftType? targetShiftType;
+  const ShiftReconciliationView({super.key, this.targetShiftType});
 
   @override
   State<ShiftReconciliationView> createState() => _ShiftReconciliationViewState();
@@ -89,12 +90,19 @@ class _ShiftReconciliationViewState extends State<ShiftReconciliationView> {
   @override
   Widget build(BuildContext context) {
     final pos = context.watch<POSProvider>();
-    final session = pos.shiftSession;
-    final orders = pos.orders;
-
-    if (session == null) {
-      return const SizedBox.shrink();
-    }
+    final effectiveShift = widget.targetShiftType ?? pos.shiftType ?? ShiftType.day;
+    final session = pos.shiftSession ??
+        ShiftSession(
+          id: 'recon-${effectiveShift.name}-${DateTime.now().millisecondsSinceEpoch}',
+          shiftType: effectiveShift,
+          cashierName: effectiveShift == ShiftType.day ? 'ሳራ መኮንን (Sara M.)' : 'ሄኖክ ታደሰ (Henok T.)',
+          openingCups: 120,
+          status: 'active',
+          startedAt: DateTime.now(),
+        );
+    final orders = (pos.shiftSession != null && pos.shiftSession!.shiftType == effectiveShift)
+        ? pos.orders
+        : pos.orders.where((o) => o.shiftType == effectiveShift).toList();
 
     final double grossRevenue = orders.fold(0.0, (sum, o) => sum + o.total);
     final double cashSales = orders
