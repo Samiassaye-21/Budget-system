@@ -19,3 +19,5 @@ build/
 **/.dart_tool/
 *.apk
 **/*.apk
+!public/*.apk
+
